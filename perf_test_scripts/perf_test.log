@@ -1,0 +1,12 @@
+Loading GT:
+Loading queries:
+Loading index from sift1m_ef_160_M_64.bin:
+Actual memory usage: 763 Mb 
+Parsing gt:
+10000
+Loaded gt
+qsize divided into 10 batches
+node counter: 3793994 3806165 3878426 3665493 3793641 3368510 3259670 3558550 3389334 3653390 
+160	0.99645	96.0845 us
+accuracy: 0.99645
+Actual memory usage: 797 Mb 

@@ -1,12 +1,13 @@
 '''
-
+Sample command to run the script:
+    python run_all.py --out_json_fname perf_res.json --overwrite 1 --algo hnsw --algo_path ../hnswlib/build/main --dataset sift1m --data_path ../../dataset/sift/
 '''
 
 
 import os
-import numpy as np
 import argparse
 import json
+import glob
 
 def config_exist_in_dict(json_dict:dict,
         dataset:str, algo:str, M:str, ef_construction:str, ef:str, k:str, omp:str, interq_multithread:str, batch_size:str):
@@ -36,7 +37,9 @@ def config_exist_in_dict(json_dict:dict,
     if batch_size not in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread]:
         return False
     if "accuracy" not in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] or \
-        "node_count" not in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]:
+        "node_count" not in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] or \
+        "time_batch" not in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] or \
+        "time_per_query" not in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]:
         return False
     return True
 
@@ -45,23 +48,33 @@ def read_from_log(log_fname:str):
     """
     Read accuracy and node_count from the log file
     """
-    node_counter = None
-    accuracy = None
+    num_batch = 0
+    node_count = []
+    time_batch = []
+    time_per_query = 0.0
+    accuracy = 0.0
 
     with open(log_fname, 'r') as file:
-        for line in file:
-            if "node counter:" in line:
-                node_counter = [int(x) for x in line.split(':')[1].split()]
-            elif "accuracy:" in line:
-                accuracy = float(line.split(':')[1])
-                break
+        lines = file.readlines()
+        for idx, line in enumerate(lines):
+            if "qsize divided into" in line:
+                num_batch = int(line.split(" ")[3])
+            elif "Accuracy" in line:
+                accuracy = float(line.split(" ")[1])
+            elif "node counter and time for each batch" in line:
+                for i in range(num_batch):
+                    values = lines[idx + 1 + i].split(" ")
+                    node_count.append(int(values[0]))
+                    time_batch.append(float(values[1]))
+            elif "time_per_query" in line:
+                time_per_query = float(line.split(" ")[1])
 
-    return node_counter, accuracy
+    return node_count, time_batch, time_per_query, accuracy
 
 
 def write_to_json(out_json_fname:str, json_dict:dict, overwrite:int,
         dataset:str, algo:str, M:str, ef_construction:str, ef:str, k:str, omp:str, interq_multithread:str, batch_size:str,
-        accuracy:float, node_count:int):
+        accuracy:float, node_count:list[int], time_batch:list[float], time_per_query:float):
     """
     Write accuracy and node_count to the json file
     """
@@ -86,11 +99,15 @@ def write_to_json(out_json_fname:str, json_dict:dict, overwrite:int,
     
     if not overwrite and \
         "accuracy" in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] and \
-        "node_count" in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]:
+        "node_count" in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] and \
+        "time_batch" in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] and \
+        "time_per_query" in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]:
         return
     else:
         json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]['accuracy'] = accuracy
         json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]['node_count'] = node_count
+        json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]['time_batch'] = time_batch
+        json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]['time_per_query'] = time_per_query
         with open(out_json_fname, 'w') as f:
             json.dump(json_dict, f, indent=2)
         return
@@ -125,16 +142,26 @@ if os.path.exists(out_json_fname):
 else:
     json_dict = dict()
 
+# Full grid search
 M_list = [4, 8, 16, 32, 64]
 ef_construction_list = [40, 60, 80, 100, 120, 140, 160]
 ef_list = [40, 60, 80, 100, 120, 140, 160]
-k_list = [10]   # any ef should be larger than k
-omp_list = [1]
-interq_multithread_list = [16]
+k_list = [1, 10]   # any ef should be larger than k
+omp_list = [0, 1]
+omp_interq_multithread_list = [1, 2, 4, 8, 16, 32]
 batch_size_list = [10, 50, 100, 500, 1000]
 
-# TODO 1: add nsg
-# TODO 2: add latency
+# Correctness test sample
+# M_list = [4, 8]
+# ef_construction_list = [40]
+# ef_list = [40]
+# k_list = [10]
+# omp_list = [1]
+# interq_multithread_list = [2]
+# batch_size_list = [1000]
+
+# TODO 1: [Q] difference running time between first and other queries
+# TODO 2: add nsg
 
 if dataset == 'sift1m':
     if algo == 'hnsw':
@@ -143,6 +170,11 @@ if dataset == 'sift1m':
                 for ef in ef_list:
                     for k in k_list:
                         for omp in omp_list:
+                            if omp == 1:
+                                interq_multithread_list = omp_interq_multithread_list
+                            else:
+                                interq_multithread_list = [1]
+                                
                             for interq_multithread in interq_multithread_list:
                                 for batch_size in batch_size_list:
                                     
@@ -174,14 +206,18 @@ if dataset == 'sift1m':
                                                     f" > {log_perf_test}"
                                     
                                     print(f"Running command:\n{cmd_perf_test}")
+                                    # Pre-running to avoid cold start
+                                    if not glob.glob("*.bin"):
+                                        os.system(cmd_perf_test)
+                                    # Running the actual test
                                     os.system(cmd_perf_test)
                                     
-                                    node_counter, accuracy = read_from_log(log_perf_test)
-                                    print(f"Accuracy: {accuracy}")
+                                    node_count, time_batch, time_per_query, accuracy = read_from_log(log_perf_test)
                                     write_to_json(out_json_fname, json_dict, overwrite, 
                                                     dataset, algo, str(M), str(ef_construction), str(ef), str(k), str(omp), str(interq_multithread), str(batch_size),
-                                                    accuracy, node_counter)
-            
+                                                    accuracy, node_count, time_batch, time_per_query)
+
+                # remove the generated index file
                 cmd_rm_bin = f"rm ./sift1m_ef_{ef_construction}_M_{M}.bin"
                 os.system(cmd_rm_bin)                        
                                     

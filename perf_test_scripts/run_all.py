@@ -148,7 +148,7 @@ ef_construction_list = [40, 60, 80, 100, 120, 140, 160]
 ef_list = [40, 60, 80, 100, 120, 140, 160]
 k_list = [1, 10]   # any ef should be larger than k
 omp_list = [0, 1]
-omp_interq_multithread_list = [1, 2, 4, 8, 16, 32]
+interq_multithread_list = [1, 2, 4, 8, 16, 32]
 batch_size_list = [10, 50, 100, 500, 1000]
 
 # Correctness test sample
@@ -170,10 +170,10 @@ if dataset == 'sift1m':
                 for ef in ef_list:
                     for k in k_list:
                         for omp in omp_list:
-                            if omp == 1:
-                                interq_multithread_list = omp_interq_multithread_list
-                            else:
+                            if omp == 0:
                                 interq_multithread_list = [1]
+                            else:
+                                batch_size_list = [10000]
                                 
                             for interq_multithread in interq_multithread_list:
                                 for batch_size in batch_size_list:

@@ -36,47 +36,47 @@ def config_exist_in_dict(json_dict:dict,
         return False
     if batch_size not in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread]:
         return False
-    if "accuracy" not in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] or \
+    if "recall" not in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] or \
         "node_count" not in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] or \
         "time_batch" not in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] or \
-        "time_per_query" not in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]:
+        "qps" not in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]:
         return False
     return True
 
 
 def read_from_log(log_fname:str):
     """
-    Read accuracy and node_count from the log file
+    Read recall and node_count from the log file
     """
     num_batch = 0
     node_count = []
     time_batch = []
-    time_per_query = 0.0
-    accuracy = 0.0
+    qps = 0.0
+    recall = 0.0
 
     with open(log_fname, 'r') as file:
         lines = file.readlines()
         for idx, line in enumerate(lines):
             if "qsize divided into" in line:
                 num_batch = int(line.split(" ")[3])
-            elif "Accuracy" in line:
-                accuracy = float(line.split(" ")[1])
+            elif "recall" in line:
+                recall = float(line.split(" ")[1])
             elif "node counter and time for each batch" in line:
                 for i in range(num_batch):
                     values = lines[idx + 1 + i].split(" ")
                     node_count.append(int(values[0]))
                     time_batch.append(float(values[1]))
-            elif "time_per_query" in line:
-                time_per_query = float(line.split(" ")[1])
+            elif "qps" in line:
+                qps = float(line.split(" ")[1])
 
-    return node_count, time_batch, time_per_query, accuracy
+    return node_count, time_batch, qps, recall
 
 
 def write_to_json(out_json_fname:str, json_dict:dict, overwrite:int,
         dataset:str, algo:str, M:str, ef_construction:str, ef:str, k:str, omp:str, interq_multithread:str, batch_size:str,
-        accuracy:float, node_count:list[int], time_batch:list[float], time_per_query:float):
+        recall:float, node_count:list[int], time_batch:list[float], qps:float):
     """
-    Write accuracy and node_count to the json file
+    Write recall and node_count to the json file
     """
     if dataset not in json_dict:
         json_dict[dataset] = dict()
@@ -98,16 +98,16 @@ def write_to_json(out_json_fname:str, json_dict:dict, overwrite:int,
         json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] = dict()
     
     if not overwrite and \
-        "accuracy" in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] and \
+        "recall" in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] and \
         "node_count" in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] and \
         "time_batch" in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size] and \
-        "time_per_query" in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]:
+        "qps" in json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]:
         return
     else:
-        json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]['accuracy'] = accuracy
+        json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]['recall'] = recall
         json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]['node_count'] = node_count
         json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]['time_batch'] = time_batch
-        json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]['time_per_query'] = time_per_query
+        json_dict[dataset][algo][M][ef_construction][ef][k][omp][interq_multithread][batch_size]['qps'] = qps
         with open(out_json_fname, 'w') as f:
             json.dump(json_dict, f, indent=2)
         return
@@ -212,10 +212,10 @@ if dataset == 'sift1m':
                                     # Running the actual test
                                     os.system(cmd_perf_test)
                                     
-                                    node_count, time_batch, time_per_query, accuracy = read_from_log(log_perf_test)
+                                    node_count, time_batch, qps, recall = read_from_log(log_perf_test)
                                     write_to_json(out_json_fname, json_dict, overwrite, 
                                                     dataset, algo, str(M), str(ef_construction), str(ef), str(k), str(omp), str(interq_multithread), str(batch_size),
-                                                    accuracy, node_count, time_batch, time_per_query)
+                                                    recall, node_count, time_batch, qps)
 
                 # remove the generated index file
                 cmd_rm_bin = f"rm ./sift1m_ef_{ef_construction}_M_{M}.bin"

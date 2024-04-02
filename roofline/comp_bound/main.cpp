@@ -89,7 +89,7 @@ double perf_test() {
         num_runs = num_runs * multiplier;
         start = start_tsc();
         for (size_t i = 0; i < num_runs; i++) {
-            L2SqrSIMD16ExtAVX(x, y, &len);
+            L2Sqr(x, y, &len);
         }
         end = stop_tsc(start);
 
@@ -101,7 +101,7 @@ double perf_test() {
     for (size_t i = 0; i < REP; i++) {
         start = start_tsc();
         for (size_t j = 0; j < num_runs; j++) {
-            L2SqrSIMD16ExtAVX(x, y, &len);
+            L2Sqr(x, y, &len);
         }
         end = stop_tsc(start);
 

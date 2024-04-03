@@ -144,12 +144,12 @@ else:
 
 # Full grid search
 M_list = [4, 8, 16, 32, 64]
-ef_construction_list = [40, 60, 80, 100, 120, 140, 160]
-ef_list = [40, 60, 80, 100, 120, 140, 160]
-k_list = [1, 10]   # any ef should be larger than k
+ef_construction_list = [40, 80, 120, 160, 200]
+ef_list = [40, 80, 120, 160, 200]
+k_list = [10]   # any ef should be larger than k
 omp_list = [0, 1]
-interq_multithread_list = [1, 2, 4, 8, 16, 32]
-batch_size_list = [10, 50, 100, 500, 1000]
+omp_interq_multithread_list = [1, 2, 4, 8, 16, 32]
+batch_size_list = [5, 10, 20, 40, 80]
 
 # Correctness test sample
 # M_list = [4, 8]
@@ -158,7 +158,7 @@ batch_size_list = [10, 50, 100, 500, 1000]
 # k_list = [10]
 # omp_list = [1]
 # interq_multithread_list = [2]
-# batch_size_list = [1000]
+# batch_size_list = [80]
 
 # TODO 1: [Q] difference running time between first and other queries
 # TODO 2: add nsg
@@ -173,7 +173,7 @@ if dataset == 'sift1m':
                             if omp == 0:
                                 interq_multithread_list = [1]
                             else:
-                                batch_size_list = [10000]
+                                interq_multithread_list = omp_interq_multithread_list
                                 
                             for interq_multithread in interq_multithread_list:
                                 for batch_size in batch_size_list:

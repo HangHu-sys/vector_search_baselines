@@ -142,23 +142,23 @@ if os.path.exists(out_json_fname):
 else:
     json_dict = dict()
 
-# Full grid search
-M_list = [4, 8, 16, 32, 64]
-ef_construction_list = [40, 80, 120, 160, 200]
-ef_list = [40, 80, 120, 160, 200]
-k_list = [10]   # any ef should be larger than k
-omp_list = [0, 1]
-omp_interq_multithread_list = [1, 2, 4, 8, 16, 32]
-batch_size_list = [5, 10, 20, 40, 80]
+# # Full grid search
+# M_list = [4, 8, 16, 32, 64]
+# ef_construction_list = [40, 80, 120, 160, 200]
+# ef_list = [40, 80, 120, 160, 200]
+# k_list = [10]   # any ef should be larger than k
+# omp_list = [0, 1]
+# omp_interq_multithread_list = [1, 2, 4, 8, 16, 32]
+# batch_size_list = [5, 10, 20, 40, 80]
 
 # Correctness test sample
-# M_list = [4, 8]
-# ef_construction_list = [40]
-# ef_list = [40]
-# k_list = [10]
-# omp_list = [1]
-# interq_multithread_list = [2]
-# batch_size_list = [80]
+M_list = [64]
+ef_construction_list = [160]
+ef_list = [200]
+k_list = [10]
+omp_list = [1]
+omp_interq_multithread_list = [4]
+batch_size_list = [16]
 
 # TODO 1: [Q] difference running time between first and other queries
 # TODO 2: add nsg

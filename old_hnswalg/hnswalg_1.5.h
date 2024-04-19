@@ -383,7 +383,7 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
             /* Other candidates */
             for (int i = 1; i < multicand && !candidate_set.empty(); i++) {
                 current_node_pair = candidate_set.top();
-                
+
                 // No need to exit while loop.
                 if ((-current_node_pair.first) > lowerBound &&
                     (top_candidates.size() == ef || (!isIdAllowed && !has_deletions))) {

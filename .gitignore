@@ -1,3 +1,4 @@
 nsg/build
 **.nsg
 **.DS_Store
+**__pycache__

@@ -1,3 +1,17 @@
+"""
+This script is used to (a) construct NSG using the C++ binaries, and (b) conduct search.
+
+Example Usage:
+
+python construct_and_search_nsg.py \
+    --DATA_PATH /mnt/scratch/wenqi/Faiss_experiments/sift1M/sift_base.fvecs \
+    --QUERY_PATH /mnt/scratch/wenqi/Faiss_experiments/sift1M/sift_query.fvecs \
+    --GT_PATH /mnt/scratch/wenqi/Faiss_experiments/sift1M/sift_groundtruth.ivecs \
+    --KNNG_PATH ./sift_200nn.graph \
+    --NSG_PATH ./sift1m.nsg
+"""
+
+
 import numpy as np
 import random
 import time
@@ -214,84 +228,89 @@ def ivecs_read(fname):
     # 10000 rows in total, 10000 * 1001 elements, 10000 * 1001 * 4 bytes
     return a.reshape(-1, d + 1)[:, 1:].copy()
 
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--DATA_PATH', type=str, default="/mnt/scratch/wenqi/Faiss_experiments/sift1M/sift_base.fvecs", help='Path to the base data file in fvecs format')
+    parser.add_argument('--QUERY_PATH', type=str, default="/mnt/scratch/wenqi/Faiss_experiments/sift1M/sift_query.fvecs", help='Path to the query data file in fvecs format')
+    parser.add_argument('--GT_PATH', type=str, default="/mnt/scratch/wenqi/Faiss_experiments/sift1M/sift_groundtruth.ivecs", help='Path to the groundtruth file in ivecs format')
+    parser.add_argument('--KNNG_PATH', type=str, default="./sift_200nn.graph", help='Path to the KNNG graph file')
+    parser.add_argument('--NSG_PATH', type=str, default="./sift1m.nsg", help='Path to the NSG index file')
+
+    # TODO 1: Add parameters for the search algorithm
+    # NSG construction parameters
+    L = 40
+    R = 50
+    C = 500
+    # Search parameters
+    K = 100
+    L_search = 100
+    assert(L_search >= K)
+
+    args = parser.parse_args()
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--DATA_PATH', type=str, default=None, help='Path to the base data file in fvecs format')
-parser.add_argument('--QUERY_PATH', type=str, default=None, help='Path to the query data file in fvecs format')
-parser.add_argument('--GT_PATH', type=str, default=None, help='Path to the groundtruth file in ivecs format')
-parser.add_argument('--KNNG_PATH', type=str, default=None, help='Path to the KNNG graph file')
-parser.add_argument('--NSG_PATH', type=str, default=None, help='Path to the NSG index file')
+    '''
+    Part 1: Load data and build the NSG index
+    '''
+    print("Start loading data")
+    data_load, points_num, dim = load_data(args.DATA_PATH)
+    query_load, query_num, query_dim = load_data(args.QUERY_PATH)
+    assert(dim == query_dim)
+    gt_load = ivecs_read(args.GT_PATH)
 
-# TODO 1: Add parameters for the search algorithm
-# NSG construction parameters
-L = 40
-R = 50
-C = 500
-# Search parameters
-K = 100
-L_search = 100
-assert(L_search >= K)
+    print("data_load: ", np.shape(data_load))
+    print("query_load: ", np.shape(query_load))
+    print("gt_load: ", np.shape(gt_load))
 
-args = parser.parse_args()
+    index = IndexNSG(dim, points_num)
 
+    if glob.glob(args.NSG_PATH):
+        print("NSG index file already exists")
+    else:
+        nsg_construct_path = "../nsg/build/tests/test_nsg_index"
+        if not glob.glob(nsg_construct_path):
+            print(f"NSG construction code: {nsg_construct_path} not found")
+            exit()
+        # assert path exists
+        assert os.path.exists(args.DATA_PATH)
+        assert os.path.exists(args.KNNG_PATH)
+        
+        cmd_build_nsg = f"{nsg_construct_path} {args.DATA_PATH} {args.KNNG_PATH} {L} {R} {C} {args.NSG_PATH}"
+        print(f"Building NSG by running command:\n{cmd_build_nsg}")
+        os.system(cmd_build_nsg)
 
-'''
-Part 1: Load data and build the NSG index
-'''
-print("Start loading data")
-data_load, points_num, dim = load_data(args.DATA_PATH)
-query_load, query_num, query_dim = load_data(args.QUERY_PATH)
-assert(dim == query_dim)
-gt_load = ivecs_read(args.GT_PATH)
-
-print("data_load: ", np.shape(data_load))
-print("query_load: ", np.shape(query_load))
-print("gt_load: ", np.shape(gt_load))
-
-index = IndexNSG(dim, points_num)
-
-if glob.glob(args.NSG_PATH):
-    print("NSG index file already exists")
-else:
-    nsg_construct_path = "../nsg/build/tests/test_nsg_index"
-    if not glob.glob(nsg_construct_path):
-        print(f"NSG construction code: {nsg_construct_path} not found")
-        exit()
-    cmd_build_nsg = f"{nsg_construct_path} {args.DATA_PATH} {args.KNNG_PATH} {L} {R} {C} {args.NSG_PATH}"
-    print(f"Running command:\n{cmd_build_nsg}")
-    os.system(cmd_build_nsg)
-
-    if not glob.glob(args.NSG_PATH):
-        print("NSG index file construction failed")
-        exit()
-    print("NSG index file construction succeeded")
+        if not glob.glob(args.NSG_PATH):
+            print("NSG index file construction failed")
+            exit()
+        print("NSG index file construction succeeded")
 
 
-'''
-Part 2: Perform the search
-'''
-index.Load(args.NSG_PATH)
+    '''
+    Part 2: Perform the search
+    '''
+    index.Load(args.NSG_PATH)
 
-qsize = 100
-paras = {'L_search': L_search}
+    qsize = 100
+    paras = {'L_search': L_search}
 
-total = 0
-correct = 0
-total_counter = 0
+    total = 0
+    correct = 0
+    total_counter = 0
 
-print("Start searching")
-for i in range(qsize):
-    indices, node_counter = index.search_with_base_graph(query_load[i], data_load, K, paras)
-    total_counter += node_counter
-    gt = gt_load[i]
-    g = set(gt)
-    total += len(gt)
-    
-    for item in indices:
-        if item in g:
-            correct += 1
+    print("Start searching (single-threaded)")
+    for i in range(qsize):
+        indices, node_counter = index.search_with_base_graph(query_load[i], data_load, K, paras)
+        total_counter += node_counter
+        gt = gt_load[i]
+        # print(len(gt))
+        g = set(gt)
+        total += len(gt)
+        
+        for item in indices:
+            if item in g:
+                correct += 1
 
-recall = 1.0 * correct / total
-avg_counter = 1.0 * total_counter / qsize
-print("recall: ", recall, "avg_counter: ", avg_counter)
+    recall = 1.0 * correct / total
+    avg_counter = 1.0 * total_counter / qsize
+    print("recall: ", recall, "avg_counter: ", avg_counter)

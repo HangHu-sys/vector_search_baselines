@@ -15,8 +15,8 @@ This is the python emulation of NSG vector search algorithm, including NSG index
 ### How to compile
 1. **Clone the repository**
 ```shell
-$ git clone --recursive https://github.com/PomeloTea0726/hnsw_experiments.git
-$ cd hnsw_experiments
+git clone --recursive https://github.com/PomeloTea0726/hnsw_experiments.git
+cd hnsw_experiments
 ```
 2. **Compile efanna_graph**
 
@@ -24,18 +24,18 @@ A knn graph is required for nsg index construction. We suggest you use [efanna\_
 
 3. **Compile nsg**
 ```shell
-$ cd nsg/
-$ mkdir build/ && cd build/
-$ cmake -DCMAKE_BUILD_TYPE=Release ..
-$ make -j
+cd nsg/
+mkdir build/ && cd build/
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j
 ```
 
 **IMPORTANT NOTE: Currently we only support the construction of nsg index from any given KNN-graph. Thus, you should ignore the compilation of efanna_graph, and provide your own KNN-graph.**
 
 ### Usage
 ```shell
-$ cd nsg_emu/
-$ python nsg.py \
+cd nsg_emu/
+python nsg.py \
 --DATA_PATH [DATA_PATH] \
 --QUERY_PATH [QUERY_PATH] \
 --GT_PATH [GT_PATH] \
@@ -53,7 +53,7 @@ The construction parameters `L`, `R`, `C` and search parameters `K`, `L_search` 
 
 Here is one example of the above execution command on sift1m:
 ```shell
-$ python nsg.py \
+python nsg.py \
 --DATA_PATH ../../dataset/sift/sift_base.fvecs \
 --QUERY_PATH ../../dataset/sift/sift_query.fvecs \
 --GT_PATH ../../dataset/sift/sift_groundtruth.ivecs \

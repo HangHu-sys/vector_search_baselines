@@ -95,6 +95,7 @@ if __name__ == "__main__":
         indices, node_counter = index.search_with_base_graph(query_load[i], data_load, K, paras)
         total_counter += node_counter
         gt = gt_load[i]
+        print(f"query {i}: gt id: {gt[0]}\tsearch result: {indices[0]}")
         # print(len(gt))
         g = set(gt)
         total += len(gt)

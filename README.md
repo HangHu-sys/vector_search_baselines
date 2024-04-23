@@ -68,5 +68,5 @@ python nsg.py \
 
 Wenqi added:
 
-- [ ] Support various datasets for NSG. Note that SIFT1M & SIFT1B somehow uses different storage format (and first 1M of 1B is not SIFT1M)
+- [ ] Support various datasets for NSG --- Note that SIFT1M & SIFT1B somehow uses different storage format (and first 1M of 1B is not SIFT1M), and we should replace the 1M with the first 1M subset of 1B. 
 - [ ] Recall fluctuates? can we fix those randomness at least by fixing seeds? This would be a major problem later on for debugging.   

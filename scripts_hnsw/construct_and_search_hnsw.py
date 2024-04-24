@@ -4,10 +4,9 @@ Construct hnsw-graph & test  performance, assuming python version of hnswlib is 
     If the graph is already constructed, load the graph and test the performance (various ef, thread numbers, etc.)
 
 Example Usage:
-python construct_and_search_hnsw.py \
-    --dbname SIFT1M \
-    --M 32 \
-    --hnsw_path ../data/CPU_hnsw_indexes
+python construct_and_search_hnsw.py --dbname SIFT1M --ef_construction 128 --M 32 --hnsw_path ../data/CPU_hnsw_indexes
+python construct_and_search_hnsw.py --dbname Deep1M --ef_construction 128 --M 32 --hnsw_path ../data/CPU_hnsw_indexes
+python construct_and_search_hnsw.py --dbname GLOVE --ef_construction 128 --M 32 --hnsw_path ../data/CPU_hnsw_indexes
 """
 import argparse
 import sys
@@ -17,7 +16,8 @@ import time
 import hnswlib
 import numpy as np
 
-from utils import mmap_fvecs, mmap_bvecs, ivecs_read, fvecs_read, read_deep_ibin, read_deep_fbin
+from utils import mmap_fvecs, mmap_bvecs, ivecs_read, fvecs_read, mmap_bvecs_SBERT, \
+    read_deep_ibin, read_deep_fbin, print_recall
 
 if __name__ == '__main__':
 
@@ -56,8 +56,8 @@ if __name__ == '__main__':
         dbsize = int(dbname[4:-1])
         dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/deep1b'
 
-        xb = mmap_fvecs(os.path.join(dataset_dir, 'base.fvecs'))
-        xq = mmap_fvecs(os.path.join(dataset_dir, 'deep1B_queries.fvecs'))
+        xb = read_deep_fbin(os.path.join(dataset_dir, 'base.1B.fbin'))
+        xq = read_deep_fbin(os.path.join(dataset_dir, 'query.public.10K.fbin'))
         # trim xb to correct size
         xb = xb[:dbsize * 1000 * 1000]
         gt = read_deep_ibin(os.path.join(dataset_dir, 'gt_idx_%dM.ibin' % dbsize))
@@ -67,9 +67,24 @@ if __name__ == '__main__':
         dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/GLOVE_840B_300d'
     
         xb = read_deep_fbin(os.path.join(dataset_dir, 'glove.840B.300d.fbin'))
-        xq = read_deep_fbin(query_fbin_dir = os.path.join(dataset_dir, 'query_10K.fbin'))
+        xq = read_deep_fbin(os.path.join(dataset_dir, 'query_10K.fbin'))
         gt = read_deep_ibin(os.path.join(dataset_dir, 'gt_idx_%dM.ibin' % dbsize))
 
+    elif dbname.startswith('SBERT1M'):
+        dbsize = 1
+        # assert dbname[:5] == 'SBERT' 
+        # assert dbname[-1] == 'M'
+        # dbsize = int(dbname[5:-1]) # in million
+        
+        dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/sbert'
+        xb = mmap_bvecs_SBERT(os.path.join(dataset_dir, 'sbert1M.fvecs'), num_vec=int(dbsize * 1e6))
+        # xb = mmap_bvecs_SBERT(os.path.join(dataset_dir, 'sbert3B.fvecs'), num_vec=int(dbsize * 1e6))
+        xq = mmap_bvecs_SBERT(os.path.join(dataset_dir, 'query_10K.fvecs'), num_vec=10 * 1000)
+        gt = read_deep_ibin(os.path.join(dataset_dir, 'gt_idx_%dM.ibin' % dbsize))
+
+        # trim to correct size
+        xb = xb[:dbsize * 1000 * 1000]
+        
     else:
         print('unknown dataset', dbname, file=sys.stderr)
         sys.exit(1)
@@ -118,16 +133,13 @@ if __name__ == '__main__':
 
         # p.set_num_threads(1)
         # Query the elements for themselves and measure recall:
+        print("Searching...")
         start = time.time()
         I, D = p.knn_query(xq, k=100)
         end = time.time()
         t_consume = end - start
 
-        print("Searching...")
-        print(' ' * 4, '\t', 'R@1    R@10   R@100')
-        for rank in 1, 10, 100:
-            n_ok = (I[:, :rank] == gt[:, :1]).sum()
-            print("{:.4f}".format(n_ok / float(nq)), end=' ')
+        print_recall(I, gt)
         print("Search {} vectors in {} sec\tQPS={}".format(nq, t_consume, nq / t_consume))
 
 
@@ -145,7 +157,8 @@ if __name__ == '__main__':
         ef_set = [64]
         # ef_set = [8, 16, 32, 64, 128, 256]
         batch_size_set = [1, 4, 16, 64, 256, 1024, 10000]
-        num_threads_set = [1, 2, 4, 8, 16, 32, 0]
+        num_threads_set = [1,32]
+        # num_threads_set = [1, 2, 4, 8, 16, 32, 0]
         k_set = [10]
         # k_set = [1, 10]
 
@@ -171,11 +184,6 @@ if __name__ == '__main__':
                         t_consume = end - start
 
                         # print("Searching...")
-                        print(' ' * 4, '\t', 'R@1    R@10   R@100')
-                        for rank in 1, 10, 100:
-                            if rank > k:
-                                break
-                            n_ok = (I[:, :rank] == gt[:, :1]).sum()
-                            print("{:.4f}".format(n_ok / float(nq)), end=' ')
+                        print_recall(I, gt)
                         print("\nSearch {} vectors in {:.2f} sec\tQPS={:.2f}\tPer-batch latency: {:.2f} ms".format(
                             nq, t_consume, nq / t_consume, t_consume / nq * 1000 * batch_size), flush=True)

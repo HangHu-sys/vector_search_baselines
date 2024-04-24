@@ -4,6 +4,37 @@ import numpy as np
 import struct
 import os
 
+def calculate_recall(I, gt, k):
+    """
+    I: ANN search result. numpy array of shape (nq, ?)
+    gt: numpy array of shape (>=nq, ?)
+    """
+    assert I.shape[1] >= k
+    assert gt.shape[1] >= k
+    nq = I.shape[0]
+    total_intersect = 0
+    for i in range(nq):
+        n_intersect = np.intersect1d(I[i, :k], gt[i, :k], assume_unique=False, return_indices=False).shape[0]
+        total_intersect += n_intersect
+    return total_intersect / (nq * k)
+
+def print_recall(I, gt): 
+    """
+    print recall (depends on the shape of I, return 1/10/100)
+    """
+    k_max = I.shape[1]
+    if k_max >= 100:
+        k_set = [1, 10, 100]
+        print(' ' * 4, '\t', 'R@1    R@10   R@100')
+    elif k_max >= 10:
+        k_set = [1, 10]
+        print(' ' * 4, '\t', 'R@1    R@10')
+    else:
+        k_set = [1]
+        print(' ' * 4, '\t', 'R@1')
+    for k in k_set:
+        print("{:.4f}".format(calculate_recall(I, gt, k)), end=' ')
+
 def mmap_fvecs(fname):
     x = np.memmap(fname, dtype='int32', mode='r')
     d = x[0]

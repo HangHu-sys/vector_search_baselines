@@ -2,10 +2,11 @@
 Convert a hnsw index to FPGA format
 
 Example Usage:
-python hnsw_to_FPGA.py \
-    --dbname SIFT1M \
-    --CPU_index_path ../data/CPU_hnsw_indexes/SIFT1M_index_M_32.bin \
-    --FPGA_index_path ../data/FPGA_hnsw/SIFT1M_M_32
+python hnsw_to_FPGA.py --dbname SIFT1M --CPU_index_path ../data/CPU_hnsw_indexes/SIFT1M_index_M_32.bin --FPGA_index_path ../data/FPGA_hnsw/SIFT1M_M32
+python hnsw_to_FPGA.py --dbname SIFT10M --CPU_index_path ../data/CPU_hnsw_indexes/SIFT10M_index_M_32.bin --FPGA_index_path ../data/FPGA_hnsw/SIFT10M_M32
+python hnsw_to_FPGA.py --dbname Deep10M --CPU_index_path ../data/CPU_hnsw_indexes/Deep10M_index_M_32.bin --FPGA_index_path ../data/FPGA_hnsw/Deep10M_M32
+python hnsw_to_FPGA.py --dbname GLOVE --CPU_index_path ../data/CPU_hnsw_indexes/GLOVE_index_M_32.bin --FPGA_index_path ../data/FPGA_hnsw/GLOVE_M32
+python hnsw_to_FPGA.py --dbname SBERT1M --CPU_index_path ../data/CPU_hnsw_indexes/SBERT1M_index_M_32.bin --FPGA_index_path ../data/FPGA_hnsw/SBERT1M_M32
 """
 
 import argparse
@@ -32,6 +33,8 @@ if __name__ == "__main__":
         dim = 96
     elif "GLOVE" in args.dbname:
         dim = 300
+    elif "SBERT" in args.dbname:
+        dim = 384
     else:
         raise ValueError("Unsupported database name")
 

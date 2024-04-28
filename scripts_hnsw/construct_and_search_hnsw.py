@@ -4,9 +4,10 @@ Construct hnsw-graph & test  performance, assuming python version of hnswlib is 
     If the graph is already constructed, load the graph and test the performance (various ef, thread numbers, etc.)
 
 Example Usage:
-python construct_and_search_hnsw.py --dbname SIFT1M --ef_construction 128 --M 32 --hnsw_path ../data/CPU_hnsw_indexes
-python construct_and_search_hnsw.py --dbname Deep1M --ef_construction 128 --M 32 --hnsw_path ../data/CPU_hnsw_indexes
-python construct_and_search_hnsw.py --dbname GLOVE --ef_construction 128 --M 32 --hnsw_path ../data/CPU_hnsw_indexes
+python construct_and_search_hnsw.py --dbname SIFT1M --ef_construction 128 --MD 64 --hnsw_path ../data/CPU_hnsw_indexes
+python construct_and_search_hnsw.py --dbname Deep1M --ef_construction 128 --MD 64 --hnsw_path ../data/CPU_hnsw_indexes
+python construct_and_search_hnsw.py --dbname GLOVE --ef_construction 128 --MD 64 --hnsw_path ../data/CPU_hnsw_indexes
+python construct_and_search_hnsw.py --dbname SBERT1M --ef_construction 128 --MD 64 --hnsw_path ../data/CPU_hnsw_indexes
 """
 import argparse
 import sys
@@ -24,16 +25,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--dbname', type=str, default="SIFT1M", help='name of the database, e.g., SIFT10M, Deep10M, GLOVE')
     parser.add_argument('--ef_construction', type=int, default=128, help='ef construction parameter')
-    parser.add_argument('--M', type=int, default=32, help='M0 is for base layer, M === M0 * 2')
+    parser.add_argument('--MD', type=int, default=64, help='Max degree of base layer, M * 2 === M0 == MD')
     parser.add_argument('--hnsw_path', type=str, default="../data/CPU_hnsw_indexes", help='Path to the NSG index file')
     args = parser.parse_args()
     
     dbname = args.dbname
     ef_construction = args.ef_construction
     hnsw_path = args.hnsw_path
-    M = args.M
+    M = int(args.MD / 2)
+    print("MD: {} Derived M in HNSW: {}".format(args.MD, M))
     
-    index_path = os.path.join(hnsw_path, '{}_index_M_{}.bin'.format(dbname, M))
+    index_path = os.path.join(hnsw_path, '{}_index_MD{}.bin'.format(dbname, args.MD))
 
     if dbname.startswith('SIFT'):
         # SIFT1M to SIFT1000M

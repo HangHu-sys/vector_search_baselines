@@ -2,11 +2,11 @@
 Convert a hnsw index to FPGA format
 
 Example Usage:
-python hnsw_to_FPGA.py --dbname SIFT1M --CPU_index_path ../data/CPU_hnsw_indexes/SIFT1M_index_M_32.bin --FPGA_index_path ../data/FPGA_hnsw/SIFT1M_M32
-python hnsw_to_FPGA.py --dbname SIFT10M --CPU_index_path ../data/CPU_hnsw_indexes/SIFT10M_index_M_32.bin --FPGA_index_path ../data/FPGA_hnsw/SIFT10M_M32
-python hnsw_to_FPGA.py --dbname Deep10M --CPU_index_path ../data/CPU_hnsw_indexes/Deep10M_index_M_32.bin --FPGA_index_path ../data/FPGA_hnsw/Deep10M_M32
-python hnsw_to_FPGA.py --dbname GLOVE --CPU_index_path ../data/CPU_hnsw_indexes/GLOVE_index_M_32.bin --FPGA_index_path ../data/FPGA_hnsw/GLOVE_M32
-python hnsw_to_FPGA.py --dbname SBERT1M --CPU_index_path ../data/CPU_hnsw_indexes/SBERT1M_index_M_32.bin --FPGA_index_path ../data/FPGA_hnsw/SBERT1M_M32
+python hnsw_to_FPGA.py --dbname SIFT1M --CPU_index_path ../data/CPU_hnsw_indexes/SIFT1M_index_MD64.bin --FPGA_index_path ../data/FPGA_hnsw/SIFT1M_MD64
+python hnsw_to_FPGA.py --dbname SIFT10M --CPU_index_path ../data/CPU_hnsw_indexes/SIFT10M_index_MD64.bin --FPGA_index_path ../data/FPGA_hnsw/SIFT10M_MD64
+python hnsw_to_FPGA.py --dbname Deep10M --CPU_index_path ../data/CPU_hnsw_indexes/Deep10M_index_MD64.bin --FPGA_index_path ../data/FPGA_hnsw/Deep10M_MD64
+python hnsw_to_FPGA.py --dbname GLOVE --CPU_index_path ../data/CPU_hnsw_indexes/GLOVE_index_MD64.bin --FPGA_index_path ../data/FPGA_hnsw/GLOVE_MD64
+python hnsw_to_FPGA.py --dbname SBERT1M --CPU_index_path ../data/CPU_hnsw_indexes/SBERT1M_index_MD64.bin --FPGA_index_path ../data/FPGA_hnsw/SBERT1M_MD64
 """
 
 import argparse
@@ -21,8 +21,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dbname', type=str, help='name of the database, e.g., SIFT10M, Deep10M, GLOVE')
-    parser.add_argument('--CPU_index_path', type=str, default='../data/CPU_hnsw_indexes/SIFT1M_index_M_32.bin', help='input path to the hnsw index .bin file')
-    parser.add_argument('--FPGA_index_path', type=str, default='../data/FPGA_hnsw/SIFT1M_M_32', help='output path to the FPGA indexes')
+    parser.add_argument('--CPU_index_path', type=str, default='../data/CPU_hnsw_indexes/SIFT1M_index_MD64.bin', help='input path to the hnsw index .bin file')
+    parser.add_argument('--FPGA_index_path', type=str, default='../data/FPGA_hnsw/SIFT1M_MD64', help='output path to the FPGA indexes')
     
     args = parser.parse_args()
     assert os.path.exists(args.CPU_index_path), "CPU index file does not exist"

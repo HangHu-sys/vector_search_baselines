@@ -5,7 +5,7 @@ Example Usage:
 python nsg_to_FPGA.py \
     --data_path /mnt/scratch/wenqi/Faiss_experiments/sift1M/sift_base.fvecs \
     --nsg_path ./sift1m.nsg \
-    --FPGA_index_path /mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG/SIFT1M_M64
+    --FPGA_index_path /mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG/SIFT1M_MD64
 
 """
 

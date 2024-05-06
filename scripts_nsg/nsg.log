@@ -1,0 +1,9 @@
+query_num divided into 5 batches
+time for each batch:
+138728 us
+135543 us
+129831 us
+124876 us
+129200 us
+recall: 0.98201
+qps: 15193.5

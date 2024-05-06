@@ -114,14 +114,10 @@ class IndexNSG():
                     if r < nk:
                         nk = r
                     # nk: the index of the smallest dist
-            
             if nk <= k:
                 k = nk
             else:  
                 k += 1
-                
-        # print_retset(retset)
-        
         indices = [0] * K
         for i in range(K):
             indices[i] = retset[i].id

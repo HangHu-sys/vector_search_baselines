@@ -1,9 +1,11 @@
+load nsg index from /mnt/scratch/hanghu/nsg_experiments/NSG_index/SBERT1M_40_50_500.nsg
+optimize graph
 query_num divided into 5 batches
 time for each batch:
-138728 us
-135543 us
-129831 us
-124876 us
-129200 us
-recall: 0.98201
-qps: 15193.5
+1893305 us
+1869118 us
+1950134 us
+1786335 us
+1871288 us
+recall: 0.92893
+qps: 1067.22

@@ -8,3 +8,6 @@
 [submodule "efanna_graph"]
 	path = efanna_graph
 	url = git@github.com:PomeloTea0726/efanna_graph.git
+[submodule "ggnn"]
+	path = ggnn
+	url = git@github.com:PomeloTea0726/ggnn.git

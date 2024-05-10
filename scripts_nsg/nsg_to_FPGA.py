@@ -3,10 +3,9 @@ Convert saved NSG index to FPGA format
 
 Example Usage:
 python nsg_to_FPGA.py \
-    --data_path /mnt/scratch/wenqi/Faiss_experiments/sift1M/sift_base.fvecs \
-    --nsg_path ./sift1m.nsg \
-    --FPGA_index_path /mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG/SIFT1M_MD64
-
+    --nsg_path ../data/CPU_NSG_index \
+    --FPGA_index_path /mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG \
+    --dbname SIFT1M --max_degree 64
 """
 
 
@@ -14,8 +13,10 @@ import numpy as np
 import argparse
 import os
 import struct
+import sys
 
-from utils import load_data
+from utils import mmap_fvecs, mmap_bvecs, ivecs_read, fvecs_read, mmap_bvecs_SBERT, \
+    read_deep_ibin, read_deep_fbin
 
 class NSGConverter():
     
@@ -135,25 +136,89 @@ class NSGConverter():
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_path', type=str, default="/mnt/scratch/wenqi/Faiss_experiments/sift1M/sift_base.fvecs", help='Path to the base data file in fvecs format')
-    parser.add_argument('--nsg_path', type=str, default="./sift1m.nsg", help='Path to the NSG index file')
-    parser.add_argument('--FPGA_index_path', type=str, default="/mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG/SIFT1M_M64", help='Path to the NSG index file')
+    parser.add_argument('--dbname', type=str, default="SIFT1M", help='dataset name')
+    parser.add_argument('--nsg_path', type=str, default="../data/CPU_NSG_index", help='Path to the NSG index file')
+    parser.add_argument('--max_degree', type=int, default=64, help='Maximum degree of the graph')
+    parser.add_argument('--FPGA_index_path', type=str, default="/mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG", help='Path to the NSG index file')
 
     args = parser.parse_args()
 
-    assert os.path.exists(args.data_path), "Data file does not exist"
-    assert os.path.exists(args.nsg_path), "NSG index file does not exist"
+    assert os.path.exists(args.nsg_path), "NSG index directory does not exist"
     assert os.path.exists(args.FPGA_index_path), "FPGA index directory does not exist"
 
-    # load data
-    print("Start loading data")
-    data_load, points_num, dim = load_data(args.data_path)
-    print("data_load: ", np.shape(data_load))
+    dbname = args.dbname
+    max_degree = args.max_degree
+    nsg_fname = os.path.join(args.nsg_path, f"{dbname}_index_MD{max_degree}.nsg")
+    assert os.path.exists(nsg_fname), "NSG index file does not exist"
+    fpga_index_fname = os.path.join(args.FPGA_index_path, f"{dbname}_MD{max_degree}")
 
+    # load data
+    # print("Start loading data")
+    # data_load, points_num, dim = load_data(args.data_path)
+    # print("data_load: ", np.shape(data_load))
+    if dbname.startswith('SIFT'):
+        # SIFT1M to SIFT1000M
+        dbsize = int(dbname[4:-1])
+        dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/bigann'
+        xb = mmap_bvecs(os.path.join(dataset_dir, 'bigann_base.bvecs'))
+        xq = mmap_bvecs(os.path.join(dataset_dir, 'bigann_query.bvecs'))
+        gt = ivecs_read(os.path.join(dataset_dir, 'gnd/idx_%dM.ivecs' % dbsize))
+
+        # trim xb to correct size
+        xb = xb[:dbsize * 1000 * 1000]
+
+        # Wenqi: load xq to main memory and reshape
+        xq = xq.astype('float32').copy()
+        xq = np.array(xq, dtype=np.float32)
+        gt = np.array(gt, dtype=np.int32)
+
+    elif dbname.startswith('Deep'):
+        # Deep1M to Deep1000M
+        dbsize = int(dbname[4:-1])
+        dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/deep1b'
+
+        xb = read_deep_fbin(os.path.join(dataset_dir, 'base.1B.fbin'))
+        xq = read_deep_fbin(os.path.join(dataset_dir, 'query.public.10K.fbin'))
+        # trim xb to correct size
+        xb = xb[:dbsize * 1000 * 1000]
+        gt = read_deep_ibin(os.path.join(dataset_dir, 'gt_idx_%dM.ibin' % dbsize))
+
+    elif dbname.startswith('GLOVE'):
+        dbsize = 2
+        dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/GLOVE_840B_300d'
+    
+        xb = read_deep_fbin(os.path.join(dataset_dir, 'glove.840B.300d.fbin'))
+        xq = read_deep_fbin(os.path.join(dataset_dir, 'query_10K.fbin'))
+        gt = read_deep_ibin(os.path.join(dataset_dir, 'gt_idx_%dM.ibin' % dbsize))
+
+    elif dbname.startswith('SBERT1M'):
+        dbsize = 1
+        # assert dbname[:5] == 'SBERT' 
+        # assert dbname[-1] == 'M'
+        # dbsize = int(dbname[5:-1]) # in million
+        
+        dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/sbert'
+        xb = mmap_bvecs_SBERT(os.path.join(dataset_dir, 'sbert1M.fvecs'), num_vec=int(dbsize * 1e6))
+        # xb = mmap_bvecs_SBERT(os.path.join(dataset_dir, 'sbert3B.fvecs'), num_vec=int(dbsize * 1e6))
+        xq = mmap_bvecs_SBERT(os.path.join(dataset_dir, 'query_10K.fvecs'), num_vec=10 * 1000)
+        gt = read_deep_ibin(os.path.join(dataset_dir, 'gt_idx_%dM.ibin' % dbsize))
+
+        # trim to correct size
+        xb = xb[:dbsize * 1000 * 1000]
+        
+    else:
+        print('unknown dataset', dbname, file=sys.stderr)
+        sys.exit(1)
+
+
+    data_load = xb.astype('float32').copy()
+    points_num = xb.shape[0]
+    dim = xb.shape[1]
+    
     # load NSG index
     nsg_converter = NSGConverter(dim, points_num)
 
-    nsg_converter.load_index(args.nsg_path)
+    nsg_converter.load_index(nsg_fname)
     nsg_converter.load_vectors(data_load)
 
-    nsg_converter.convert_to_FPGA_format(args.FPGA_index_path, num_channels=[1, 2, 4])
+    nsg_converter.convert_to_FPGA_format(fpga_index_fname, num_channels=[1, 2, 4])

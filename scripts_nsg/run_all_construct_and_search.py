@@ -21,30 +21,45 @@ import argparse
 import glob
 import pandas as pd
 
-def read_from_log(log_fname:str):
-    """
-    Read recall and time_batch from the log file
-    """
-    num_batch = 0
-    time_batch = []
-    qps = 0.0
-    recall = 0.0
+def read_from_log(log_fname:str, mode:str):
+    if mode == "construct":
+        """
+        Read real max degree from the log file
+        """
+        real_max_degree = 0
+        with open(log_fname, 'r') as file:
+            lines = file.readlines()
+            for line in lines:
+                if "Degree Statistics" in line:
+                    real_max_degree = int(line.split(" ")[4].split(",")[0])
+        return real_max_degree
+    else:
+        """
+        Read recall and time_batch from the log file
+        """
+        num_batch = 0
+        time_batch = []
+        qps = 0.0
+        recall_1 = None
+        recall_10 = None
 
-    with open(log_fname, 'r') as file:
-        lines = file.readlines()
-        for idx, line in enumerate(lines):
-            if "qsize divided into" in line:
-                num_batch = int(line.split(" ")[3])
-            elif "recall" in line:
-                recall = float(line.split(" ")[1])
-            elif "time for each batch" in line:
-                for i in range(num_batch):
-                    values = lines[idx + 1 + i].split(" ")
-                    time_batch.append(float(values[0]))
-            elif "qps" in line:
-                qps = float(line.split(" ")[1])
+        with open(log_fname, 'r') as file:
+            lines = file.readlines()
+            for idx, line in enumerate(lines):
+                if "qsize divided into" in line:
+                    num_batch = int(line.split(" ")[3])
+                elif "recall_1" in line:
+                    recall_1 = float(line.split(" ")[1])
+                elif "recall_10" in line:
+                    recall_10 = float(line.split(" ")[1])
+                elif "time for each batch" in line:
+                    for i in range(num_batch):
+                        values = lines[idx + 1 + i].split(" ")
+                        time_batch.append(float(values[0]))
+                elif "qps" in line:
+                    qps = float(line.split(" ")[1])
 
-    return recall, time_batch, qps
+        return recall_1, recall_10, time_batch, qps
 
 
 if __name__ == "__main__":
@@ -71,6 +86,8 @@ if __name__ == "__main__":
     # convert to absolute path
     input_knng_path = os.path.abspath(input_knng_path)
     output_nsg_path = os.path.abspath(output_nsg_path)
+    
+    log_nsg = 'nsg.log'  
 
     if mode == "construct":
           
@@ -94,6 +111,7 @@ if __name__ == "__main__":
             for construct_L in construct_L_list_const:
                 for construct_C in construct_C_list_const:
                     for construct_R in construct_R_list:
+                        R = construct_R
                         # Construct NSG index
                         if not os.path.exists(output_nsg_path):
                             os.mkdir(output_nsg_path)
@@ -105,14 +123,37 @@ if __name__ == "__main__":
                             assert os.path.exists(knng_path)
                             # Here: need to manually -1, cause we got this when using 16 as max degree
                             #   Degree Statistics: Max = 17, Min = 1, Avg = 15 (finally push a link to the root)
-                            cmd_build_nsg = f"{nsg_con_bin_path} {dataset} {knng_path} {construct_L} {construct_R - 2} {construct_C} {nsg_file}"
+                            cmd_build_nsg = f"{nsg_con_bin_path} {dataset} {knng_path} {construct_L} {construct_R} {construct_C} {nsg_file} > {log_nsg}"
                             print(f"Constructing NSG by running command:\n{cmd_build_nsg}")
                             os.system(cmd_build_nsg)
+                            real_max_degree = read_from_log(log_nsg, mode)
                             
                             if not os.path.exists(nsg_file):
                                 print("NSG index file construction failed")
                                 exit()
                             print("NSG index file construction succeeded")
+                            
+                            
+                            while real_max_degree > construct_R:
+                                cmd_rm_nsg = f"rm {nsg_file}"
+                                os.system(cmd_rm_nsg)
+                                
+                                if construct_R == 0:
+                                    print("Max degree is 0, fail to construct the NSG index")
+                                    exit()
+                                    
+                                print(f"Real max degree {real_max_degree} is not equal to the expected max degree {construct_R}, re-construct the NSG index")
+                                R -= 1
+                                cmd_build_nsg = f"{nsg_con_bin_path} {dataset} {knng_path} {construct_L} {R} {construct_C} {nsg_file} > {log_nsg}"
+                                os.system(cmd_build_nsg)
+                                real_max_degree = read_from_log(log_nsg, mode)
+                                if not os.path.exists(nsg_file):
+                                    print("NSG index file construction failed")
+                                    exit()
+                                print("NSG index file construction succeeded")
+                            
+                            print(f"Succeed to construct the NSG index with max degree {real_max_degree}")
+            
             
     elif mode == "search": 
 
@@ -133,70 +174,59 @@ if __name__ == "__main__":
         pd.set_option('display.expand_frame_repr', False)
     
         search_L_list = [100]
-        search_K_list = [10]
         omp_list = [0]
         omp_interq_multithread_list = [1]
         batch_size_list = [2000]
         construct_R_list = [16, 32, 64] # R means max degree
-        log_nsg = 'nsg.log'  
-    
 
-        for construct_R_list in construct_R_list:
-            # Construct NSG index
-            
+        for construct_R in construct_R_list:
             nsg_file = os.path.join(output_nsg_path, f"{dataset}_index_MD{construct_R}.nsg")
             assert os.path.exists(nsg_file)
 
             # Perform the search
             for search_L in search_L_list:
-                for search_K in search_K_list:
-                    for omp in omp_list:
+                for omp in omp_list:
+                    
+                    if omp == 0:
+                        interq_multithread_list = [1]
+                    else:
+                        interq_multithread_list = omp_interq_multithread_list
                         
-                        if omp == 0:
-                            interq_multithread_list = [1]
-                        else:
-                            interq_multithread_list = omp_interq_multithread_list
+                    for interq_multithread in interq_multithread_list:
+                        for batch_size in batch_size_list:
                             
-                        for interq_multithread in interq_multithread_list:
-                            for batch_size in batch_size_list:
-                                
-                                cmd_search_nsg = f"{nsg_search_bin_path} " + \
-                                                f"{dataset} " + \
-                                                f"{nsg_file} " + \
-                                                f"{search_L} " + \
-                                                f"{search_K} " + \
-                                                f"{omp} " + \
-                                                f"{interq_multithread} " + \
-                                                f"{batch_size}" + \
-                                                f" > {log_nsg}"
-                                print(f"Searching NSG by running command:\n{cmd_search_nsg}")
-                                os.system(cmd_search_nsg)
+                            cmd_search_nsg = f"{nsg_search_bin_path} " + \
+                                            f"{dataset} " + \
+                                            f"{nsg_file} " + \
+                                            f"{search_L} " + \
+                                            f"{omp} " + \
+                                            f"{interq_multithread} " + \
+                                            f"{batch_size}" + \
+                                            f" > {log_nsg}"
+                            print(f"Searching NSG by running command:\n{cmd_search_nsg}")
+                            os.system(cmd_search_nsg)
 
-                                recall, time_batch, qps = read_from_log(log_nsg)
-                                # print(f"Recall: {recall}, Time Batch: {time_batch}, QPS: {qps}")
-                                # if already in the df, delete the old row first
-                                key_values = {
-                                    'dataset': dataset,
-                                    'construct_K': construct_K,
-                                    'construct_L_R_C': (construct_L, R, C),
-                                    'search_L': search_L,
-                                    'search_K': search_K,
-                                    'omp': omp,
-                                    'interq_multithread': interq_multithread,
-                                    'batch_size': batch_size
-                                }
-                                if len(df) > 0:
-                                    idx = df.index[(df['dataset'] == dataset) & \
-                                                    (df['construct_K'] == construct_K) & \
-                                                    (df['construct_L_R_C'] == (construct_L, R, C)) & \
-                                                    (df['search_L'] == search_L) & \
-                                                    (df['search_K'] == search_K) & \
-                                                    (df['omp'] == omp) & \
-                                                    (df['interq_multithread'] == interq_multithread) & \
-                                                    (df['batch_size'] == batch_size)]
-                                    if len(idx) > 0:
-                                        df = df.drop(idx)
-                                    df = df.append({**key_values, 'recall': recall, 'time_batch': time_batch, 'qps': qps}, ignore_index=True)
+                            recall_1, recall_10, time_batch, qps = read_from_log(log_nsg, mode)
+                            # print(f"Recall: {recall}, Time Batch: {time_batch}, QPS: {qps}")
+                            # if already in the df, delete the old row first
+                            key_values = {
+                                'dataset': dataset,
+                                'max_degree': construct_R,
+                                'search_L': search_L,
+                                'omp': omp,
+                                'interq_multithread': interq_multithread,
+                                'batch_size': batch_size
+                            }
+                            if len(df) > 0:
+                                idx = df.index[(df['dataset'] == dataset) & \
+                                                (df['max_degree'] == construct_R) & \
+                                                (df['search_L'] == search_L) & \
+                                                (df['omp'] == omp) & \
+                                                (df['interq_multithread'] == interq_multithread) & \
+                                                (df['batch_size'] == batch_size)]
+                                if len(idx) > 0:
+                                    df = df.drop(idx)
+                                df = df.append({**key_values, 'recall_1': recall_1, 'recall_10': recall_10, 'time_batch': time_batch, 'qps': qps}, ignore_index=True)
     
         if args.perf_df_path is not None:
             df.to_pickle(args.perf_df_path, protocol=4)

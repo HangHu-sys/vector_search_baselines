@@ -1,3 +1,11 @@
+"""
+Example Usage:
+    python construct_faiss_knn.py --dataset SIFT1M --construct_K 200 --output_path ../data/CPU_knn_graphs
+    python construct_faiss_knn.py --dataset SIFT10M --construct_K 200 --output_path ../data/CPU_knn_graphs
+    python construct_faiss_knn.py --dataset SBERT1M --construct_K 200 --output_path ../data/CPU_knn_graphs
+"""
+
+
 import faiss
 import os
 import numpy as np
@@ -9,7 +17,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', type=str, default='sift1m', help='dataset to use: sift1m')
-    parser.add_argument('--construct_K', type=int, default=10, help='K value for KNN graph construction')
+    parser.add_argument('--construct_K', type=int, default=200, help='K value for KNN graph construction')
+    parser.add_argument('--output_path', type=str, default='../data/CPU_knn_graphs', help='Path to save the KNN graph')
+    parser.add_argument('--batch_size', type=int, default=1000 * 1000, help='Batch size for KNN graph construction')
 
     args = parser.parse_args()
     dataset:str = args.dataset
@@ -17,7 +27,7 @@ if __name__ == "__main__":
     
     print("Load data...")
     
-    if dataset.startswith('sift'):
+    if dataset.startswith('SIFT'):
         # sift1m to sift1000m
         dbsize = int(dataset[4:-1])
         dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/bigann'
@@ -53,11 +63,22 @@ if __name__ == "__main__":
 
     print("Search index...")
 
-    D, I = index.search(X, construct_K)
+    # D, I = index.search(X, construct_K)
+    # search results in batch
+    D = np.zeros((N, construct_K), dtype=np.float32)
+    I = np.zeros((N, construct_K), dtype=np.int32)
+    for i in range(0, N, args.batch_size):
+        print("Batch: ", i)
+        X_batch = X[i:i + args.batch_size]
+        D_batch, I_batch = index.search(X_batch, construct_K)
+        D[i:i + args.batch_size] = D_batch
+        I[i:i + args.batch_size] = I_batch
 
     print("Save knn graph...")
 
-    filename = f"/mnt/scratch/hanghu/nsg_experiments/KNN_graphs/{dataset}_{construct_K}NN.graph"
+    if not os.path.exists(args.output_path):
+        os.makedirs(args.output_path)
+    filename = os.path.join(args.output_path, f"{dataset}_{construct_K}NN.graph")
     with open(filename, "wb") as f:
         for i in range(N):
             f.write(struct.pack('i', construct_K))

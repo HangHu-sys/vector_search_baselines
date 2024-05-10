@@ -18,6 +18,13 @@ This is the python emulation of NSG vector search algorithm, including NSG index
 git clone --recursive https://github.com/PomeloTea0726/hnsw_experiments.git
 cd hnsw_experiments
 ```
+
+To update:
+
+```
+git submodule update --init --recursive
+```
+
 2. **Compile efanna_graph**
 
 A knn graph is required for nsg index construction. We suggest you use [efanna\_graph](https://github.com/PomeloTea0726/efanna_graph) to build this knn graph. Currently you can directly fetch examples from [here](https://github.com/PomeloTea0726/nsg/#pre-built-knn-graph-and-nsg-index).
@@ -27,7 +34,7 @@ A knn graph is required for nsg index construction. We suggest you use [efanna\_
 cd nsg/
 mkdir build/ && cd build/
 cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j
+make -j16
 ```
 
 **IMPORTANT NOTE: Currently we only support the construction of nsg index from any given KNN-graph. Thus, you should ignore the compilation of efanna_graph, and provide your own KNN-graph.**

@@ -23,6 +23,7 @@ To update:
 
 ```
 git pull --recurse-submodules
+# git submodule update --init --recursive
 ```
 
 2. **Compile efanna_graph**

@@ -1,4 +1,7 @@
 """
+WARINING: This script is depracated, as it only supports sift1m (not the first 1m of the SIFT1B), 
+	and it uses CPU python to search the graph.
+
 This script is used to (a) construct NSG using the C++ binaries, and (b) conduct search.
 
 Example Usage:

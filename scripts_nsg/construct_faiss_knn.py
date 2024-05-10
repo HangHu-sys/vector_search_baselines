@@ -1,8 +1,10 @@
 """
 Example Usage:
-    python construct_faiss_knn.py --dataset SIFT1M --construct_K 200 --output_path ../data/CPU_knn_graphs
-    python construct_faiss_knn.py --dataset SIFT10M --construct_K 200 --output_path ../data/CPU_knn_graphs
-    python construct_faiss_knn.py --dataset SBERT1M --construct_K 200 --output_path ../data/CPU_knn_graphs
+    python construct_faiss_knn.py --dbname SIFT1M --construct_K 200 --output_path ../data/CPU_knn_graphs
+    python construct_faiss_knn.py --dbname SIFT10M --construct_K 200 --output_path ../data/CPU_knn_graphs
+    python construct_faiss_knn.py --dbname Deep1M --construct_K 200 --output_path ../data/CPU_knn_graphs
+    python construct_faiss_knn.py --dbname Deep10M --construct_K 200 --output_path ../data/CPU_knn_graphs
+    python construct_faiss_knn.py --dbname SBERT1M --construct_K 200 --output_path ../data/CPU_knn_graphs
 """
 
 
@@ -11,32 +13,42 @@ import os
 import numpy as np
 import struct
 import argparse
-from utils import mmap_bvecs, mmap_bvecs_SBERT
+from utils import mmap_bvecs, mmap_bvecs_SBERT, read_deep_fbin, read_deep_ibin
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default='sift1m', help='dataset to use: sift1m')
+    parser.add_argument('--dbname', type=str, default='SIFT1M', help='dbname to use: sift1m')
     parser.add_argument('--construct_K', type=int, default=200, help='K value for KNN graph construction')
     parser.add_argument('--output_path', type=str, default='../data/CPU_knn_graphs', help='Path to save the KNN graph')
     parser.add_argument('--batch_size', type=int, default=1000 * 1000, help='Batch size for KNN graph construction')
 
     args = parser.parse_args()
-    dataset:str = args.dataset
+    dbname:str = args.dbname
     construct_K:int = args.construct_K
     
     print("Load data...")
     
-    if dataset.startswith('SIFT'):
+    if dbname.startswith('SIFT'):
         # sift1m to sift1000m
-        dbsize = int(dataset[4:-1])
+        dbsize = int(dbname[4:-1])
         dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/bigann'
         xb = mmap_bvecs(os.path.join(dataset_dir, 'bigann_base.bvecs'))
         
         # trim xb to correct size
         xb = xb[:dbsize * 1000 * 1000]
-        
-    elif dataset.startswith('SBERT1M'):
+    
+    elif dbname.startswith('Deep'):
+        # Deep1M to Deep1000M
+        dbsize = int(dbname[4:-1])
+        dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/deep1b'
+
+        xb = read_deep_fbin(os.path.join(dataset_dir, 'base.1B.fbin'))
+        xq = read_deep_fbin(os.path.join(dataset_dir, 'query.public.10K.fbin'))
+        # trim xb to correct size
+        xb = xb[:dbsize * 1000 * 1000]
+ 
+    elif dbname.startswith('SBERT1M'):
         dbsize = 1
         dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/sbert'
         xb = mmap_bvecs_SBERT(os.path.join(dataset_dir, 'sbert1M.fvecs'))
@@ -78,7 +90,7 @@ if __name__ == "__main__":
 
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
-    filename = os.path.join(args.output_path, f"{dataset}_{construct_K}NN.graph")
+    filename = os.path.join(args.output_path, f"{dbname}_{construct_K}NN.graph")
     with open(filename, "wb") as f:
         for i in range(N):
             f.write(struct.pack('i', construct_K))

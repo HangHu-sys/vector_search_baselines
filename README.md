@@ -22,7 +22,7 @@ cd hnsw_experiments
 To update:
 
 ```
-git submodule update --init --recursive
+git pull --recurse-submodules
 ```
 
 2. **Compile efanna_graph**

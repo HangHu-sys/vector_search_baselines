@@ -62,6 +62,9 @@ class NSGConverter():
         assert len(self.final_graph) > 0, "Please load the index first"
         assert len(self.final_graph) == self.db_vec.shape[0], "The number of vertices in the index and data do not match"
 
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        
         # save meta data
         byte_array_meta = bytearray() 
         byte_array_meta += self.cur_element_count.to_bytes(4, byteorder='little', signed=False)

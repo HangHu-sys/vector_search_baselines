@@ -19,6 +19,7 @@ python run_all_construct_and_search.py --mode search \
 import os
 import argparse
 import glob
+import numpy as np
 import pandas as pd
 
 def read_from_log(log_fname:str, mode:str):
@@ -87,7 +88,8 @@ if __name__ == "__main__":
     input_knng_path = os.path.abspath(input_knng_path)
     output_nsg_path = os.path.abspath(output_nsg_path)
     
-    log_nsg = 'nsg.log'  
+    # random num log
+    log_nsg = 'nsg_{}.log'.format(np.random.randint(1000000))
 
     if mode == "construct":
           
@@ -97,7 +99,7 @@ if __name__ == "__main__":
         construct_K_list_const = [200] # knn graph
         construct_L_list_const = [50] # a magic number that controls graph construction quality
         construct_C_list_const = [500] # another magic number that controls graph construction quality
-        construct_R_list = [16, 32, 64] # R means max degree
+        construct_R_list = [64] # R means max degree
         
         for construct_K in construct_K_list_const:        
             # Check if KNN graph file exists
@@ -145,6 +147,7 @@ if __name__ == "__main__":
                                 print(f"Real max degree {real_max_degree} is not equal to the expected max degree {construct_R}, re-construct the NSG index")
                                 R -= 1
                                 cmd_build_nsg = f"{nsg_con_bin_path} {dataset} {knng_path} {construct_L} {R} {construct_C} {nsg_file} > {log_nsg}"
+                                print(f"Constructing NSG by running command:\n{cmd_build_nsg}")
                                 os.system(cmd_build_nsg)
                                 real_max_degree = read_from_log(log_nsg, mode)
                                 if not os.path.exists(nsg_file):
@@ -230,3 +233,5 @@ if __name__ == "__main__":
     
         if args.perf_df_path is not None:
             df.to_pickle(args.perf_df_path, protocol=4)
+
+    os.system("rm " + log_nsg)

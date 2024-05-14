@@ -99,7 +99,7 @@ if __name__ == "__main__":
         construct_K_list_const = [200] # knn graph
         construct_L_list_const = [50] # a magic number that controls graph construction quality
         construct_C_list_const = [500] # another magic number that controls graph construction quality
-        construct_R_list = [64] # R means max degree
+        construct_R_list = [16] # R means max degree
         
         for construct_K in construct_K_list_const:        
             # Check if KNN graph file exists
@@ -180,7 +180,7 @@ if __name__ == "__main__":
         omp_list = [0]
         omp_interq_multithread_list = [1]
         batch_size_list = [2000]
-        construct_R_list = [16, 32, 64] # R means max degree
+        construct_R_list = [16] # R means max degree
 
         for construct_R in construct_R_list:
             nsg_file = os.path.join(output_nsg_path, f"{dataset}_index_MD{construct_R}.nsg")
@@ -234,4 +234,4 @@ if __name__ == "__main__":
         if args.perf_df_path is not None:
             df.to_pickle(args.perf_df_path, protocol=4)
 
-    os.system("rm " + log_nsg)
+    # os.system("rm " + log_nsg)

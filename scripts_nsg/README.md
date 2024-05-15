@@ -1,5 +1,13 @@
 # NSG scripts
 
+## We applied some changes to the NSG folder
+
+@Hang
+
+1. 
+
+2. 
+
 ## Construct NSG Indexes
 
 First: construct the exact kNN graph using GPU faiss:
@@ -21,10 +29,8 @@ python run_all_construct_and_search.py --mode construct --input_knng_path ../dat
 
 python run_all_construct_and_search.py --mode construct --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset Deep1M
 
-# Note: Deep10M cannot achieve max_degree=16,32; for 64, it takes almost a day -> reducing max edges from 64 to 38
 python run_all_construct_and_search.py --mode construct --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset Deep10M
 
-# Note: SBERT somehow has 100~200 edges for max_degree=16,32 respectively, so do not consider this dataset
 # python run_all_construct_and_search.py --mode construct --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset SBERT1M
 ```
 
@@ -49,11 +55,29 @@ python nsg_to_FPGA.py --nsg_path ../data/CPU_NSG_index --FPGA_index_path /mnt/sc
 
 # Deep10M
 python nsg_to_FPGA.py --nsg_path ../data/CPU_NSG_index --FPGA_index_path /mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG --dbname Deep10M --max_degree 64
-# python nsg_to_FPGA.py --nsg_path ../data/CPU_NSG_index --FPGA_index_path /mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG --dbname Deep10M --max_degree 32
-# python nsg_to_FPGA.py --nsg_path ../data/CPU_NSG_index --FPGA_index_path /mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG --dbname Deep10M --max_degree 16
+python nsg_to_FPGA.py --nsg_path ../data/CPU_NSG_index --FPGA_index_path /mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG --dbname Deep10M --max_degree 32
+python nsg_to_FPGA.py --nsg_path ../data/CPU_NSG_index --FPGA_index_path /mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG --dbname Deep10M --max_degree 16
 
 # SBERT1M
 # python nsg_to_FPGA.py --nsg_path ../data/CPU_NSG_index --FPGA_index_path /mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG --dbname SBERT1M --max_degree 64
 # python nsg_to_FPGA.py --nsg_path ../data/CPU_NSG_index --FPGA_index_path /mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG --dbname SBERT1M --max_degree 32
 # python nsg_to_FPGA.py --nsg_path ../data/CPU_NSG_index --FPGA_index_path /mnt/scratch/wenqi/hnsw_experiments/data/FPGA_NSG --dbname SBERT1M --max_degree 16
+```
+
+## Evaluate CPU latency & throughput
+
+Before running the following commands, make sure the configurations in the scripts are properly set:, e.g., 
+```
+	search_L_list = [64, 80, 100]
+	omp_list = [1] # 1 = enable; 0 = disable
+	batch_size_list = [1, 2, 4, 8, 16, 10000]
+	construct_R_list = [64] # R means max degree
+```
+
+Now run (make sure `max_cores` is properly set):
+```
+python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset SIFT1M --perf_df_path perf_df.pickle --max_cores 16
+python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset SIFT10M --perf_df_path perf_df.pickle --max_cores 16
+python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset Deep1M --perf_df_path perf_df.pickle --max_cores 16
+python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset Deep10M --perf_df_path perf_df.pickle --max_cores 16
 ```

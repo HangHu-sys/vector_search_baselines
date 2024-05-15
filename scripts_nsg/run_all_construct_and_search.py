@@ -11,7 +11,7 @@ Example Usage (search):
 
 python run_all_construct_and_search.py --mode search \
     --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search \
-    --dataset SIFT1M --perf_df_path perf_df.pickle
+    --dataset SIFT1M --perf_df_path perf_df.pickle --max_cores 16
     
     The latest result can be viewed in temp log: "./nsg.log".
     Currently we support SIFT, Deep, and SBERT1M.
@@ -73,6 +73,7 @@ if __name__ == "__main__":
     parser.add_argument('--nsg_con_bin_path', type=str, default=None, help='path to nsg construction algorithm')
     parser.add_argument('--nsg_search_bin_path', type=str, default=None, help='path to nsg search algorithm')
     parser.add_argument('--dataset', type=str, default='SIFT1M', help='dataset to use: SIFT1M')
+    parser.add_argument('--max_cores', type=int, default=16, help='maximum number of cores used for search')
 
     args = parser.parse_args()
 
@@ -83,6 +84,7 @@ if __name__ == "__main__":
     output_nsg_path = args.output_nsg_path
     dataset:str = args.dataset
     mode = args.mode
+    max_cores = args.max_cores
 
     # convert to absolute path
     input_knng_path = os.path.abspath(input_knng_path)
@@ -99,7 +101,7 @@ if __name__ == "__main__":
         construct_K_list_const = [200] # knn graph
         construct_L_list_const = [50] # a magic number that controls graph construction quality
         construct_C_list_const = [500] # another magic number that controls graph construction quality
-        construct_R_list = [16] # R means max degree
+        construct_R_list = [16, 32, 64] # R means max degree
         
         for construct_K in construct_K_list_const:        
             # Check if KNN graph file exists
@@ -163,7 +165,7 @@ if __name__ == "__main__":
         if not os.path.exists(nsg_search_bin_path):
             raise ValueError(f"Path to algorithm does not exist: {nsg_search_bin_path}")
 
-        key_columns = ['dataset', 'max_degree', 'search_L', 'omp', 'interq_multithread', 'batch_size']
+        key_columns = ['dataset', 'max_degree', 'search_L', 'omp_enable', 'max_cores', 'batch_size']
         result_columns = ['recall_1', 'recall_10', 'time_batch', 'qps']
         columns = key_columns + result_columns
 
@@ -172,15 +174,21 @@ if __name__ == "__main__":
             assert len(df.columns.values) == len(columns)
             for col in columns:
                 assert col in df.columns.values
+            print("Performance dataframe loaded")
         else:
+            print(f"Performance dataframe does not exist, create a new one: {perf_df_path}")
             df = pd.DataFrame(columns=columns)
         pd.set_option('display.expand_frame_repr', False)
     
-        search_L_list = [100]
-        omp_list = [0]
-        omp_interq_multithread_list = [1]
-        batch_size_list = [2000]
-        construct_R_list = [16] # R means max degree
+        construct_R_list = [64] # R means max degree
+        search_L_list = [16, 32, 48, 64, 80, 96]
+        omp_list = [1] # 1 = enable; 0 = disable
+        batch_size_list = [1, 2, 4, 8, 16, 10000]
+        print("Warning: please set the search parameters in the script, current settings:")
+        print(f"construct_R_list: {construct_R_list}")
+        print(f"search_L_list: {search_L_list}")	
+        print(f"omp_list: {omp_list}")
+        print(f"batch_size_list: {batch_size_list}")
 
         for construct_R in construct_R_list:
             nsg_file = os.path.join(output_nsg_path, f"{dataset}_index_MD{construct_R}.nsg")
@@ -189,47 +197,50 @@ if __name__ == "__main__":
             # Perform the search
             for search_L in search_L_list:
                 for omp in omp_list:
-                    
-                    if omp == 0:
-                        interq_multithread_list = [1]
-                    else:
-                        interq_multithread_list = omp_interq_multithread_list
+                    for batch_size in batch_size_list:
+                        if omp == 0:
+                            interq_multithread = 1
+                        else:
+                            if batch_size > max_cores:
+                                interq_multithread = max_cores
+                            else:
+                                interq_multithread = batch_size
                         
-                    for interq_multithread in interq_multithread_list:
-                        for batch_size in batch_size_list:
-                            
-                            cmd_search_nsg = f"{nsg_search_bin_path} " + \
-                                            f"{dataset} " + \
-                                            f"{nsg_file} " + \
-                                            f"{search_L} " + \
-                                            f"{omp} " + \
-                                            f"{interq_multithread} " + \
-                                            f"{batch_size}" + \
-                                            f" > {log_nsg}"
-                            print(f"Searching NSG by running command:\n{cmd_search_nsg}")
-                            os.system(cmd_search_nsg)
+                        cmd_search_nsg = f"taskset --cpu-list 0-{max_cores-1} " + \
+                                        f"{nsg_search_bin_path} " + \
+                                        f"{dataset} " + \
+                                        f"{nsg_file} " + \
+                                        f"{search_L} " + \
+                                        f"{omp} " + \
+                                        f"{interq_multithread} " + \
+                                        f"{batch_size}" + \
+                                        f" > {log_nsg}"
+                        print(f"Searching NSG by running command:\n{cmd_search_nsg}")
+                        os.system(cmd_search_nsg)
 
-                            recall_1, recall_10, time_batch, qps = read_from_log(log_nsg, mode)
-                            # print(f"Recall: {recall}, Time Batch: {time_batch}, QPS: {qps}")
-                            # if already in the df, delete the old row first
-                            key_values = {
-                                'dataset': dataset,
-                                'max_degree': construct_R,
-                                'search_L': search_L,
-                                'omp': omp,
-                                'interq_multithread': interq_multithread,
-                                'batch_size': batch_size
-                            }
-                            if len(df) > 0:
-                                idx = df.index[(df['dataset'] == dataset) & \
-                                                (df['max_degree'] == construct_R) & \
-                                                (df['search_L'] == search_L) & \
-                                                (df['omp'] == omp) & \
-                                                (df['interq_multithread'] == interq_multithread) & \
-                                                (df['batch_size'] == batch_size)]
-                                if len(idx) > 0:
-                                    df = df.drop(idx)
-                                df = df.append({**key_values, 'recall_1': recall_1, 'recall_10': recall_10, 'time_batch': time_batch, 'qps': qps}, ignore_index=True)
+                        recall_1, recall_10, time_batch, qps = read_from_log(log_nsg, mode)
+                        # print(f"Recall: {recall}, Time Batch: {time_batch}, QPS: {qps}")
+                        # if already in the df, delete the old row first
+                        key_values = {
+                            'dataset': dataset,
+                            'max_degree': construct_R,
+                            'search_L': search_L,
+                            'omp_enable': omp,
+                            'max_cores': max_cores,
+                            'batch_size': batch_size
+                        }
+                        if len(df) > 0:
+                            idx = df.index[(df['dataset'] == dataset) & \
+                                            (df['max_degree'] == construct_R) & \
+                                            (df['search_L'] == search_L) & \
+                                            (df['omp_enable'] == omp) & \
+                                            (df['max_cores'] == max_cores) & \
+                                            (df['batch_size'] == batch_size)]
+                            if len(idx) > 0:
+                                print("Warning: duplicate entry found, deleting the old entry:")
+                                print(df.loc[idx])
+                                df = df.drop(idx)
+                            df = df.append({**key_values, 'recall_1': recall_1, 'recall_10': recall_10, 'time_batch': time_batch, 'qps': qps}, ignore_index=True)
     
         if args.perf_df_path is not None:
             df.to_pickle(args.perf_df_path, protocol=4)

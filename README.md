@@ -35,4 +35,4 @@ See `scripts_hnsw/README.md`
 
 Wenqi added:
 
-- [ ] Recall fluctuates? can we fix those randomness at least by fixing seeds? This would be a major problem later on for debugging.   
+- [ ] @Hang, add the description to the changes in NSG in the REAMDE.md in scripts_nsg

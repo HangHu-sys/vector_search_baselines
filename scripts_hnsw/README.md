@@ -59,3 +59,5 @@ python hnsw_to_FPGA.py --dbname SBERT1M --CPU_index_path ../data/CPU_hnsw_indexe
 python hnsw_to_FPGA.py --dbname SBERT1M --CPU_index_path ../data/CPU_hnsw_indexes/SBERT1M_index_MD32.bin --FPGA_index_path ../data/FPGA_hnsw/SBERT1M_MD32
 python hnsw_to_FPGA.py --dbname SBERT1M --CPU_index_path ../data/CPU_hnsw_indexes/SBERT1M_index_MD16.bin --FPGA_index_path ../data/FPGA_hnsw/SBERT1M_MD16
 ```
+
+## Evaluate CPU latency & throughput

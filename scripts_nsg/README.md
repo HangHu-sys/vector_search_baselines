@@ -4,9 +4,11 @@
 
 @Hang
 
-1. 
+1. To avoid recall randomness, we removed the additional random initial candidates at the start of NSG search. Currently it's safe to assert that such modification has little impact on recall.
 
-2. 
+2. To ensure that the generated Navigating Spread-out Graph maintains a maximum degree no more than $R$, we introduced a new condition for each edge addition $e(u,v)$ that $d(u)$ should be no more than $R$. Otherwise, the program proceeds to traverse the candidates or randomly pick a node whose degree does not exceed R.
+
+3. We support multiple dataset formats (see `include/load_data.h`) and have adapted them in the NSG index construction and search.
 
 ## Construct NSG Indexes
 

@@ -29,6 +29,15 @@ See `scripts_nsg/README.md`
 
 ### HNSW
 
+**Compile hnswlib**
+
+```
+mkdir hnswlib/build
+cd hnswlib/build
+cmake ..
+make 
+```
+
 See `scripts_hnsw/README.md`
 
 ## TODO

@@ -11,7 +11,7 @@ Example Usage (search):
 
 python run_all_construct_and_search.py --mode search \
     --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search \
-    --dataset SIFT1M --perf_df_path perf_df.pickle --max_cores 16
+    --dataset SIFT1M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
     
     The latest result can be viewed in temp log: "./nsg.log".
     Currently we support SIFT, Deep, and SBERT1M.
@@ -36,10 +36,10 @@ def read_from_log(log_fname:str, mode:str):
         return real_max_degree
     else:
         """
-        Read recall and time_batch from the log file
+        Read recall and latency_ms_per_batch from the log file
         """
         num_batch = 0
-        time_batch = []
+        latency_ms_per_batch = []
         qps = 0.0
         recall_1 = None
         recall_10 = None
@@ -47,20 +47,21 @@ def read_from_log(log_fname:str, mode:str):
         with open(log_fname, 'r') as file:
             lines = file.readlines()
             for idx, line in enumerate(lines):
-                if "qsize divided into" in line:
+                if "query_num divided into" in line:
                     num_batch = int(line.split(" ")[3])
-                elif "recall_1" in line:
+                elif "recall_1:" in line:
                     recall_1 = float(line.split(" ")[1])
-                elif "recall_10" in line:
+                elif "recall_10:" in line:
                     recall_10 = float(line.split(" ")[1])
                 elif "time for each batch" in line:
+                    # recorded in us
                     for i in range(num_batch):
                         values = lines[idx + 1 + i].split(" ")
-                        time_batch.append(float(values[0]))
+                        latency_ms_per_batch.append(float(values[0]) / 1000)
                 elif "qps" in line:
                     qps = float(line.split(" ")[1])
 
-        return recall_1, recall_10, time_batch, qps
+        return recall_1, recall_10, latency_ms_per_batch, qps
 
 
 if __name__ == "__main__":
@@ -74,6 +75,7 @@ if __name__ == "__main__":
     parser.add_argument('--nsg_search_bin_path', type=str, default=None, help='path to nsg search algorithm')
     parser.add_argument('--dataset', type=str, default='SIFT1M', help='dataset to use: SIFT1M')
     parser.add_argument('--max_cores', type=int, default=16, help='maximum number of cores used for search')
+    parser.add_argument('--nruns', type=int, default=3, help='number of runs per setting (for recording latency and throughput)')
 
     args = parser.parse_args()
 
@@ -85,6 +87,7 @@ if __name__ == "__main__":
     dataset:str = args.dataset
     mode = args.mode
     max_cores = args.max_cores
+    nruns = args.nruns
 
     # convert to absolute path
     input_knng_path = os.path.abspath(input_knng_path)
@@ -166,7 +169,7 @@ if __name__ == "__main__":
             raise ValueError(f"Path to algorithm does not exist: {nsg_search_bin_path}")
 
         key_columns = ['dataset', 'max_degree', 'search_L', 'omp_enable', 'max_cores', 'batch_size']
-        result_columns = ['recall_1', 'recall_10', 'time_batch', 'qps']
+        result_columns = ['recall_1', 'recall_10', 'latency_ms_per_batch', 'qps']
         columns = key_columns + result_columns
 
         if os.path.exists(perf_df_path): # load existing
@@ -181,9 +184,12 @@ if __name__ == "__main__":
         pd.set_option('display.expand_frame_repr', False)
     
         construct_R_list = [64] # R means max degree
-        search_L_list = [16, 32, 48, 64, 80, 96]
+        search_L_list = [64]
+        # search_L_list = [64, 80, 96]
+        # search_L_list = [16, 32, 48, 64, 80, 96]
         omp_list = [1] # 1 = enable; 0 = disable
-        batch_size_list = [1, 2, 4, 8, 16, 10000]
+        batch_size_list = [1]
+        # batch_size_list = [1, 2, 4, 8, 16, 10000]
         print("Warning: please set the search parameters in the script, current settings:")
         print(f"construct_R_list: {construct_R_list}")
         print(f"search_L_list: {search_L_list}")	
@@ -206,20 +212,26 @@ if __name__ == "__main__":
                             else:
                                 interq_multithread = batch_size
                         
-                        cmd_search_nsg = f"taskset --cpu-list 0-{max_cores-1} " + \
-                                        f"{nsg_search_bin_path} " + \
-                                        f"{dataset} " + \
-                                        f"{nsg_file} " + \
-                                        f"{search_L} " + \
-                                        f"{omp} " + \
-                                        f"{interq_multithread} " + \
-                                        f"{batch_size}" + \
-                                        f" > {log_nsg}"
-                        print(f"Searching NSG by running command:\n{cmd_search_nsg}")
-                        os.system(cmd_search_nsg)
+                        latency_ms_per_batch = []
+                        qps = []
+                        for run in range(nruns):
+                            cmd_search_nsg = f"taskset --cpu-list 0-{max_cores-1} " + \
+                                            f"{nsg_search_bin_path} " + \
+                                            f"{dataset} " + \
+                                            f"{nsg_file} " + \
+                                            f"{search_L} " + \
+                                            f"{omp} " + \
+                                            f"{interq_multithread} " + \
+                                            f"{batch_size}" + \
+                                            f" > {log_nsg}"
+                            print(f"Searching NSG by running command:\n{cmd_search_nsg}")
+                            os.system(cmd_search_nsg)
 
-                        recall_1, recall_10, time_batch, qps = read_from_log(log_nsg, mode)
-                        # print(f"Recall: {recall}, Time Batch: {time_batch}, QPS: {qps}")
+                            recall_1, recall_10, latency_ms_per_batch_this_run, qps_this_run = read_from_log(log_nsg, mode)
+                            latency_ms_per_batch.extend(latency_ms_per_batch_this_run)
+                            qps.append(qps_this_run)
+
+                        # print(f"Recall: {recall}, Time Batch: {latency_ms_per_batch}, QPS: {qps}")
                         # if already in the df, delete the old row first
                         key_values = {
                             'dataset': dataset,
@@ -229,20 +241,21 @@ if __name__ == "__main__":
                             'max_cores': max_cores,
                             'batch_size': batch_size
                         }
-                        if len(df) > 0:
-                            idx = df.index[(df['dataset'] == dataset) & \
-                                            (df['max_degree'] == construct_R) & \
-                                            (df['search_L'] == search_L) & \
-                                            (df['omp_enable'] == omp) & \
-                                            (df['max_cores'] == max_cores) & \
-                                            (df['batch_size'] == batch_size)]
-                            if len(idx) > 0:
-                                print("Warning: duplicate entry found, deleting the old entry:")
-                                print(df.loc[idx])
-                                df = df.drop(idx)
-                            df = df.append({**key_values, 'recall_1': recall_1, 'recall_10': recall_10, 'time_batch': time_batch, 'qps': qps}, ignore_index=True)
+                        
+                        idx = df.index[(df['dataset'] == dataset) & \
+                                        (df['max_degree'] == construct_R) & \
+                                        (df['search_L'] == search_L) & \
+                                        (df['omp_enable'] == omp) & \
+                                        (df['max_cores'] == max_cores) & \
+                                        (df['batch_size'] == batch_size)]
+                        if len(idx) > 0:
+                            print("Warning: duplicate entry found, deleting the old entry:")
+                            print(df.loc[idx])
+                            df = df.drop(idx)
+                        print(f"Appending new entry:")
+                        print(key_values)
+                        df = df.append({**key_values, 'recall_1': recall_1, 'recall_10': recall_10, 'latency_ms_per_batch': latency_ms_per_batch, 'qps': qps}, ignore_index=True)
     
-        if args.perf_df_path is not None:
-            df.to_pickle(args.perf_df_path, protocol=4)
+        df.to_pickle(args.perf_df_path, protocol=4)
 
     # os.system("rm " + log_nsg)

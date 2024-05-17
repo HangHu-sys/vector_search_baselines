@@ -72,8 +72,9 @@ Before running the following commands, make sure the configurations in the scrip
 
 Now run (make sure `max_cores` is properly set):
 ```
-python run_all_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_search_bin_path ../hnswlib/build/main --perf_df_path perf_df.pickle --dataset SIFT1M --max_cores 16
-python run_all_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_search_bin_path ../hnswlib/build/main --perf_df_path perf_df.pickle --dataset SIFT10M --max_cores 16
-python run_all_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_search_bin_path ../hnswlib/build/main --perf_df_path perf_df.pickle --dataset Deep1M --max_cores 16
-python run_all_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_search_bin_path ../hnswlib/build/main --perf_df_path perf_df.pickle --dataset Deep10M --max_cores 16
+python run_all_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_search_bin_path ../hnswlib/build/main --perf_df_path perf_df.pickle --dataset SIFT1M --max_cores 16  --nruns 3
+python run_all_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_search_bin_path ../hnswlib/build/main --perf_df_path perf_df.pickle --dataset SIFT10M --max_cores 16  --nruns 3
+python run_all_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_search_bin_path ../hnswlib/build/main --perf_df_path perf_df.pickle --dataset Deep1M --max_cores 16  --nruns 3
+python run_all_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_search_bin_path ../hnswlib/build/main --perf_df_path perf_df.pickle --dataset Deep10M --max_cores 16  --nruns 3
+cp perf_df.pickle /mnt/scratch/wenqi/graph-vector-search-on-FPGA/plots/saved_perf_CPU/hnsw.pickle
 ```

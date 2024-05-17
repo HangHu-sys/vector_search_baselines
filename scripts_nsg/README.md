@@ -2,8 +2,6 @@
 
 ## We applied some changes to the NSG folder
 
-@Hang
-
 1. To avoid recall randomness, we removed the additional random initial candidates at the start of NSG search. Currently it's safe to assert that such modification has little impact on recall.
 
 2. To ensure that the generated Navigating Spread-out Graph maintains a maximum degree no more than $R$, we introduced a new condition for each edge addition $e(u,v)$ that $d(u)$ should be no more than $R$. Otherwise, the program proceeds to traverse the candidates or randomly pick a node whose degree does not exceed R.
@@ -78,8 +76,9 @@ Before running the following commands, make sure the configurations in the scrip
 
 Now run (make sure `max_cores` is properly set):
 ```
-python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset SIFT1M --perf_df_path perf_df.pickle --max_cores 16
-python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset SIFT10M --perf_df_path perf_df.pickle --max_cores 16
-python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset Deep1M --perf_df_path perf_df.pickle --max_cores 16
-python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset Deep10M --perf_df_path perf_df.pickle --max_cores 16
+python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset SIFT1M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
+python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset SIFT10M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
+python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset Deep1M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
+python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset Deep10M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
+cp perf_df.pickle /mnt/scratch/wenqi/graph-vector-search-on-FPGA/plots/saved_perf_CPU/nsg.pickle
 ```

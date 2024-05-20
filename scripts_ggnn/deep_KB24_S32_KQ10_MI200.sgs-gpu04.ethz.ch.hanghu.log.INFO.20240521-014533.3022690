@@ -1,0 +1,32 @@
+Log file created at: 2024/05/21 01:45:33
+Running on machine: sgs-gpu04.ethz.ch
+Log line format: [IWEF]yyyymmdd hh:mm:ss.uuuuuu threadid file:line] msg
+I20240521 01:45:33.244005 3022690 deep.cu:141] Using the following parameters 24 (KBuild) 12 (KF) 32 (S) 4 (L) 96 (D) 
+I20240521 01:45:33.303176 3022690 deep.cu:153] device name: NVIDIA GeForce RTX 3090
+I20240521 01:45:33.390319 3022690 loader_ann.hpp:60] Open /mnt/scratch/wenqi/Faiss_experiments/deep1b/base.1B.fbin with 1000000000 96-dim vectors.
+I20240521 01:45:33.543676 3022690 loader_ann.hpp:90] Loading 1000000 vectors starting at 0 ...
+I20240521 01:45:33.795019 3022690 loader_ann.hpp:99] Done
+I20240521 01:45:33.796309 3022690 loader_ann.hpp:60] Open /mnt/scratch/wenqi/Faiss_experiments/deep1b/query.public.10K.fbin with 10000 96-dim vectors.
+I20240521 01:45:33.798230 3022690 loader_ann.hpp:90] Loading 10000 vectors starting at 0 ...
+I20240521 01:45:33.799546 3022690 loader_ann.hpp:99] Done
+I20240521 01:45:33.800416 3022690 loader_ann.hpp:60] Open /mnt/scratch/wenqi/Faiss_experiments/deep1b/gt_idx_1M.ibin with 10000 1000-dim vectors.
+I20240521 01:45:33.800439 3022690 loader_ann.hpp:90] Loading 10000 vectors starting at 0 ...
+I20240521 01:45:33.823855 3022690 loader_ann.hpp:99] Done
+I20240521 01:45:33.824806 3022690 cuda_knn_ggnn_gpu_instance.cuh:131] GGNNGPUInstance(): CUDA device id: 0
+I20240521 01:45:33.869393 3022690 cuda_knn_ggnn_gpu_instance.cuh:169] remaining device memory (23.3047 GB) suffices for 51 shards (0.450311 GB each).
+I20240521 01:45:33.920601 3022690 deep.cu:183] --
+I20240521 01:45:33.920624 3022690 deep.cu:184] 90, 95, 99% R@1, 99% C@10 (using -tau 0.5 -refinement_iterations 2):
+I20240521 01:45:33.920660 3022690 deep.cu:171] --
+I20240521 01:45:33.920661 3022690 deep.cu:172] Query with tau_query 0.5
+I20240521 01:45:33.920670 3022690 deep.cu:177] regular query (good for C@10)
+I20240521 01:45:34.818708 3022690 cuda_knn_ggnn.cuh:244] query_num divided into 5 batches 
+I20240521 01:45:34.827073 3022690 cuda_knn_ggnn.cuh:254] [GPU: 0] query part: 0 => ms: 8.30086
+I20240521 01:45:34.835224 3022690 cuda_knn_ggnn.cuh:254] [GPU: 0] query part: 0 => ms: 8.13158
+I20240521 01:45:34.843626 3022690 cuda_knn_ggnn.cuh:254] [GPU: 0] query part: 0 => ms: 8.39168
+I20240521 01:45:34.851609 3022690 cuda_knn_ggnn.cuh:254] [GPU: 0] query part: 0 => ms: 7.97389
+I20240521 01:45:34.859887 3022690 cuda_knn_ggnn.cuh:254] [GPU: 0] query part: 0 => ms: 8.26778
+I20240521 01:45:34.859891 3022690 cuda_knn_ggnn.cuh:256] Query_per_second: 243512
+I20240521 01:45:34.866339 3022690 cuda_knn_ggnn_results.cuh:208] c@1 (=r@1): 0.9843 +duplicates: 0.9844
+I20240521 01:45:34.866348 3022690 cuda_knn_ggnn_results.cuh:211] c@10: 0.96235 +duplicates: 0.96253
+I20240521 01:45:34.866349 3022690 cuda_knn_ggnn_results.cuh:215] r@10: 0.9844 +duplicates: 0.9844
+I20240521 01:45:34.866351 3022690 cuda_knn_ggnn_results.cuh:218] c@10: 0.96235

@@ -4,18 +4,18 @@ This script runs ggnn to either (a) construct index or (b) measure the recall an
 Example Usage (construct):
 
     python run_all_construct_and_search.py --mode construct \
-        --ggnn_index_path /mnt/scratch/hanghu/CPU_GGNN_GRAPH/ \
+        --ggnn_index_path ../data/GPU_GGNN_GRAPH/ \
         --ggnn_bin_path ../ggnn/build_local/ \
         --dataset SIFT1M \
-        --gpu_core 3
+        --gpu_id 3
 
 Example Usage (search):
 
     python run_all_construct_and_search.py --mode search \
-        --ggnn_index_path /mnt/scratch/hanghu/CPU_GGNN_GRAPH/ \
+        --ggnn_index_path ../data/GPU_GGNN_GRAPH/ \
         --ggnn_bin_path ../ggnn/build_local/ \
         --dataset SIFT1M \
-        --gpu_core 3 \
+        --gpu_id 3 \
         --nruns 2
 
 '''
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     parser.add_argument('--perf_df_path', type=str, default='perf_df.pickle', help='path to save the performance dataframe')
     parser.add_argument('--ggnn_bin_path', type=str, default=None, help='path to ggnn binary directory')
     parser.add_argument('--dataset', type=str, default='SIFT1M', help='dataset to use: SIFT1M')
-    parser.add_argument('--gpu_core', type=int, default=0, help='gpu core to use')
+    parser.add_argument('--gpu_id', type=int, default=0, help='gpu core to use')
     parser.add_argument('--nruns', type=int, default=3, help='number of runs per setting (for recording latency and throughput)')
     
     args = parser.parse_args()
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     perf_df_path = args.perf_df_path
     ggnn_bin_path = args.ggnn_bin_path
     dataset = args.dataset
-    gpu_core = args.gpu_core
+    gpu_id = args.gpu_id
     nruns = args.nruns
     
     # convert to absolute path
@@ -123,23 +123,30 @@ if __name__ == "__main__":
     search_KBuild_list = [64]           # should be subset of construct_KBuild_list
     search_S_list = [64]                # should be subset of construct_S_list
     search_KQuery_list = [10]           # should be subset of construct_KQuery_list
-    search_MaxIter_list = [400]   # should be subset of construct_MaxIter_list
+    search_MaxIter_list = [1, 64, 100, 200, 400]   # should be subset of construct_MaxIter_list
     search_tauq_list = [0.5]
-    search_bs_list = [2000, 5000]
+    search_bs_list = [10000]
+    # search_bs_list = [1, 2, 4, 8, 16, 10000]
     
     # First make sure everything is compiled
     cmakelist_path = os.path.dirname(ggnn_bin_path)
     cmakelist = os.path.join(cmakelist_path, "CMakeLists.txt")
-    update_cmakelists(cmakelist, 'KBUILD_VALUES', construct_KBuild_list)
-    update_cmakelists(cmakelist, 'SEG_VALUES', construct_S_list)
-    update_cmakelists(cmakelist, 'KQUERY_VALUES', construct_KQuery_list)
-    update_cmakelists(cmakelist, 'MAXITER_VALUES', construct_MaxIter_list)
+    if mode == 'construct':
+        update_cmakelists(cmakelist, 'KBUILD_VALUES', construct_KBuild_list)
+        update_cmakelists(cmakelist, 'SEG_VALUES', construct_S_list)
+        update_cmakelists(cmakelist, 'KQUERY_VALUES', construct_KQuery_list)
+        update_cmakelists(cmakelist, 'MAXITER_VALUES', construct_MaxIter_list)
+    elif mode == 'search':
+        update_cmakelists(cmakelist, 'KBUILD_VALUES', search_KBuild_list)
+        update_cmakelists(cmakelist, 'SEG_VALUES', search_S_list)
+        update_cmakelists(cmakelist, 'KQUERY_VALUES', search_KQuery_list)
+        update_cmakelists(cmakelist, 'MAXITER_VALUES', search_MaxIter_list)
     print(f"Compiling GGNN binary...")
     subprocess.run(["cmake", ".."], cwd=ggnn_bin_path, check=True)
     subprocess.run(["make", "-j"], cwd=ggnn_bin_path, check=True)
     
     # Now run the experiments
-    cmd_core = f"export CUDA_VISIBLE_DEVICES={gpu_core}"
+    cmd_core = f"export CUDA_VISIBLE_DEVICES={gpu_id}"
     print(f"Setting CUDA_VISIBLE_DEVICES: {cmd_core}")
     os.system(cmd_core)
     

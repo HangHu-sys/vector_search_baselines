@@ -65,7 +65,7 @@ python hnsw_to_FPGA.py --dbname SBERT1M --CPU_index_path ../data/CPU_hnsw_indexe
 Before running the following commands, make sure the configurations in the scripts are properly set:, e.g., 
 ```
     max_degree_list = [64]
-    ef_list = [16, 32, 48, 64, 80, 96]
+    ef_list = [64]
     omp_list = [1] # 1 = enable; 0 = disable
     batch_size_list = [1, 2, 4, 8, 16, 10000]
 ```

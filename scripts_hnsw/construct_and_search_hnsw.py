@@ -185,18 +185,6 @@ if __name__ == '__main__':
                         end = time.time()
                         t_consume = end - start
 
-                        for print_id in range(10):
-                            print("QID: ", print_id)
-                            print("query IDs:")
-                            print(I[print_id])
-                            # print("Distances:")
-                            # print(D[print_id])
-                            print("Intersect count:",
-                                np.intersect1d(I[print_id, :10], gt[print_id, :10], assume_unique=False, return_indices=False).shape[0])
-                            print("gt: ", gt[print_id, :10])
-                        print("First queries recall:")
-                        print_recall(I[:10], gt[:10])
-
                         # print("Searching...")
                         print_recall(I, gt)
                         print("\nSearch {} vectors in {:.2f} sec\tQPS={:.2f}\tPer-batch latency: {:.2f} ms".format(

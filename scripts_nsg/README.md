@@ -68,7 +68,7 @@ python nsg_to_FPGA.py --nsg_path ../data/CPU_NSG_index --FPGA_index_path /mnt/sc
 
 Before running the following commands, make sure the configurations in the scripts are properly set:, e.g., 
 ```
-	search_L_list = [64, 80, 100]
+	search_L_list = [64] # the recall result shows that this is actually equivalent to ef=64 in HNSW
 	omp_list = [1] # 1 = enable; 0 = disable
 	batch_size_list = [1, 2, 4, 8, 16, 10000]
 	construct_R_list = [64] # R means max degree

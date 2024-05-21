@@ -39,6 +39,10 @@ def read_from_log(log_fname:str):
             elif "qps" in line:
                 qps = float(line.split(" ")[1])
 
+    # if more than 2 batches, remove the latency of the first and last batch
+    if len(latency_ms_per_batch) > 2:
+        latency_ms_per_batch = latency_ms_per_batch[1:-1]	
+
     return recall_1, recall_10, latency_ms_per_batch, qps
 
 
@@ -150,8 +154,9 @@ if __name__ == "__main__":
                         print(df.loc[idx])
                         df = df.drop(idx)
                     print(f"Appending new entry:")
-                    print(key_values)
-                    df = df.append({**key_values, 'recall_1': recall_1, 'recall_10': recall_10, 'latency_ms_per_batch': latency_ms_per_batch, 'qps': qps}, ignore_index=True)
+                    new_entry = {**key_values, 'recall_1': recall_1, 'recall_10': recall_10, 'latency_ms_per_batch': latency_ms_per_batch, 'qps': qps}
+                    print(new_entry)
+                    df = df.append(new_entry, ignore_index=True)
     
         df.to_pickle(args.perf_df_path, protocol=4)
 

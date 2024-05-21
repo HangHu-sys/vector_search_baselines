@@ -112,17 +112,19 @@ if __name__ == "__main__":
     # search_S_list = [32, 64]                # should be subset of construct_S_list
     # search_KQuery_list = [10, 20]           # should be subset of construct_KQuery_list
     # search_MaxIter_list = [200, 400, 800]   # should be subset of construct_MaxIter_list
+    # search_tauq_list = [0.3, 0.4, 0.5, 0.6, 0.7]
     # search_bs_list = [1, 2, 4, 8, 16, 10000]
     
-    construct_KBuild_list = [24, 40]         # number of neighbors per point in the graph
-    construct_S_list = [32]              # segment/batch size (needs to be > KBuild-KF)
+    construct_KBuild_list = [64]         # number of neighbors per point in the graph
+    construct_S_list = [64]              # segment/batch size (needs to be > KBuild-KF)
     construct_KQuery_list = [10]         # number of neighbors to search for
-    construct_MaxIter_list = [200] # number of iterations for BFiS
+    construct_MaxIter_list = [400] # number of iterations for BFiS
     
-    search_KBuild_list = [24]           # should be subset of construct_KBuild_list
-    search_S_list = [32]                # should be subset of construct_S_list
+    search_KBuild_list = [64]           # should be subset of construct_KBuild_list
+    search_S_list = [64]                # should be subset of construct_S_list
     search_KQuery_list = [10]           # should be subset of construct_KQuery_list
-    search_MaxIter_list = [200]   # should be subset of construct_MaxIter_list
+    search_MaxIter_list = [400]   # should be subset of construct_MaxIter_list
+    search_tauq_list = [0.5]
     search_bs_list = [2000, 5000]
     
     # First make sure everything is compiled
@@ -169,7 +171,7 @@ if __name__ == "__main__":
     
     elif mode == 'search':
         
-        key_columns = ['dataset', 'KBuild', 'S', 'KQuery', 'MaxIter', 'batch_size']
+        key_columns = ['dataset', 'KBuild', 'S', 'KQuery', 'MaxIter', 'batch_size', 'tau_query']
         result_columns = ['recall_1', 'recall_10', 'latency_ms_per_batch', 'qps']
         columns = key_columns + result_columns
         
@@ -200,58 +202,63 @@ if __name__ == "__main__":
                 for KQuery in search_KQuery_list:
                     for MaxIter in search_MaxIter_list:
                         for bs in search_bs_list:
+                            for tauq in search_tauq_list:
                         
-                            latency_ms_per_batch = []
-                            qps = []
-                            for run in range(nruns):
-                                files_before = set(glob.glob("*"))
-                                ggnn_bin = os.path.join(ggnn_bin_path, f"{ggnn_bin_prefix}_KB{KBuild}_S{S}_KQ{KQuery}_MI{MaxIter}")
-                                if not os.path.exists(ggnn_bin):
-                                    raise ValueError(f"GGNN binary does not exist: {ggnn_bin}")
-                                cmd_search = f"{ggnn_bin} " + \
-                                            f"--dbname={dataset} " + \
-                                            f"--graph_filename={ggnn_index} " + \
-                                            f"--mode={int_mode} " + \
-                                            f"--bs={bs} " + \
-                                            f"--log_dir=."
-                                print(f"Searching GGNN by running command:\n{cmd_search}")
-                                os.system(cmd_search)
+                                latency_ms_per_batch = []
+                                qps = []
+                                for run in range(nruns):
+                                    files_before = set(glob.glob("*"))
+                                    ggnn_bin = os.path.join(ggnn_bin_path, f"{ggnn_bin_prefix}_KB{KBuild}_S{S}_KQ{KQuery}_MI{MaxIter}")
+                                    if not os.path.exists(ggnn_bin):
+                                        raise ValueError(f"GGNN binary does not exist: {ggnn_bin}")
+                                    cmd_search = f"{ggnn_bin} " + \
+                                                f"--dbname={dataset} " + \
+                                                f"--graph_filename={ggnn_index} " + \
+                                                f"--mode={int_mode} " + \
+                                                f"--bs={bs} " + \
+                                                f"--tau_query={tauq} " + \
+                                                f"--log_dir=."
+                                    print(f"Searching GGNN by running command:\n{cmd_search}")
+                                    os.system(cmd_search)
+                                    
+                                    files_after = set(glob.glob("*"))
+                                    log_file = list(files_after - files_before)[0]
+                                    recall_1, recall_10, latency_ms_per_batch_this_run, qps_this_run = read_from_log(log_file)
+                                    latency_ms_per_batch.extend(latency_ms_per_batch_this_run)
+                                    qps.append(qps_this_run)
+                                    
+                                    os.system(f"rm {log_file}")
+                                    # print(qps)
+                                    
+                                # if already in the df, delete the old row first
+                                key_values = {
+                                    'dataset': dataset,
+                                    'KBuild': KBuild,
+                                    'S': S,
+                                    'KQuery': KQuery,
+                                    'MaxIter': MaxIter,
+                                    'batch_size': bs,
+                                    'tau_query': tauq
+                                }
                                 
-                                files_after = set(glob.glob("*"))
-                                log_file = list(files_after - files_before)[0]
-                                recall_1, recall_10, latency_ms_per_batch_this_run, qps_this_run = read_from_log(log_file)
-                                latency_ms_per_batch.append(latency_ms_per_batch_this_run)
-                                qps.append(qps_this_run)
+                                idx = df.index[(df['dataset'] == dataset) & \
+                                            (df['KBuild'] == KBuild) & \
+                                            (df['S'] == S) & \
+                                            (df['KQuery'] == KQuery) & \
+                                            (df['MaxIter'] == MaxIter) & \
+                                            (df['batch_size'] == bs) & \
+                                            (df['tau_query'] == tauq)]
+                                if len(idx) > 0:
+                                    print("Warning: duplicate entry found, deleting the old entry:")
+                                    print(df.loc[idx])
+                                    df = df.drop(idx)
+                                print(f"Appending new entry:")
+                                # print(key_values)
                                 
-                                os.system(f"rm {log_file}")
-                                # print(qps)
-                                
-                            # if already in the df, delete the old row first
-                            key_values = {
-                                'dataset': dataset,
-                                'KBuild': KBuild,
-                                'S': S,
-                                'KQuery': KQuery,
-                                'MaxIter': MaxIter,
-                                'batch_size': bs
-                            }
-                            
-                            idx = df.index[(df['dataset'] == dataset) & \
-                                           (df['KBuild'] == KBuild) & \
-                                           (df['S'] == S) & \
-                                           (df['KQuery'] == KQuery) & \
-                                           (df['MaxIter'] == MaxIter) & \
-                                           (df['batch_size'] == bs)]
-                            if len(idx) > 0:
-                                print("Warning: duplicate entry found, deleting the old entry:")
-                                print(df.loc[idx])
-                                df = df.drop(idx)
-                            print(f"Appending new entry:")
-                            print(key_values)
-                            
-                            new_entry = {**key_values, 'recall_1': recall_1, 'recall_10': recall_10, 'latency_ms_per_batch': latency_ms_per_batch, 'qps': qps}
-                            print(new_entry)
-                            df = pd.concat([df, pd.DataFrame(new_entry)], ignore_index=True)
+                                new_entry = {**key_values, 'recall_1': recall_1, 'recall_10': recall_10, 'latency_ms_per_batch': latency_ms_per_batch, 'qps': qps}
+                                print(new_entry)
+                                # df = pd.concat([df, pd.DataFrame.from_dict(new_entry)], ignore_index=True)
+                                df = df.append({**key_values, 'recall_1': recall_1, 'recall_10': recall_10, 'latency_ms_per_batch': latency_ms_per_batch, 'qps': qps}, ignore_index=True)
                                         
         df.to_pickle(perf_df_path, protocol=4)
 

@@ -122,8 +122,8 @@ if __name__ == "__main__":
     
     search_KBuild_list = [64]           # should be subset of construct_KBuild_list
     search_S_list = [64]                # should be subset of construct_S_list
-    search_KQuery_list = [10]           # should be subset of construct_KQuery_list
-    search_MaxIter_list = [1, 64, 100, 200, 400]   # should be subset of construct_MaxIter_list
+    search_KQuery_list = [10]
+    search_MaxIter_list = [1, 64, 100, 200, 400]
     search_tauq_list = [0.5]
     search_bs_list = [10000]
     # search_bs_list = [1, 2, 4, 8, 16, 10000]
@@ -143,7 +143,7 @@ if __name__ == "__main__":
         update_cmakelists(cmakelist, 'MAXITER_VALUES', search_MaxIter_list)
     print(f"Compiling GGNN binary...")
     subprocess.run(["cmake", ".."], cwd=ggnn_bin_path, check=True)
-    subprocess.run(["make", "-j"], cwd=ggnn_bin_path, check=True)
+    subprocess.run(["make"], cwd=ggnn_bin_path, check=True)
     
     # Now run the experiments
     cmd_core = f"export CUDA_VISIBLE_DEVICES={gpu_id}"

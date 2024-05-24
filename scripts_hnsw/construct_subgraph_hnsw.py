@@ -7,27 +7,20 @@ To compare the search performance of the full graph approach and the sub-graph a
         
         The first two must share the same efConstruction, efSearch, and M parameters.
         Both of them are used for the c++ search and get_items() operation in conversion.
-    
-    3. The verification graph index (e.g. SIFT1M_index_ver.bin)
-    
-        The verification graph index is used to convert the sub-graph search results (ids) to full graph search results (ids).
-        So this index should be much more accurate using higher efConstruction, efSearch, and M parameters.
 
 Example Usage:
     python construct_subgraph_hnsw.py \
         --dbname SIFT1M \
         --ef_construction 128 \
         --MD 64 \
-        --ef_full 64 \
-        --ef_sub 24 \
         --hnsw_path /mnt/scratch/hanghu/CPU_hnsw_index \
-        --subgraph_result_path /mnt/scratch/hanghu/sub_graph_results \
-        --sub_graph_num 4
+        --subgraph_result_path /mnt/scratch/hanghu/sub_graph_results
 """
 import argparse
 import sys
 import os
 import time 
+import pandas as pd
 
 import hnswlib
 import numpy as np
@@ -35,6 +28,38 @@ import numpy as np
 from utils import mmap_fvecs, mmap_bvecs, ivecs_read, fvecs_read, mmap_bvecs_SBERT, \
     read_deep_ibin, read_deep_fbin, print_recall, calculate_recall
 
+
+def read_output_file(filename):
+    with open(filename, 'r') as file:
+        I = []
+        for line in file:
+            elements = line.split()
+            row = []
+            for i in range(0, len(elements), 2):
+                first = int(elements[i])
+                second = int(elements[i + 1])
+                row.append((first, second))
+            I.append(row)
+    return I
+
+
+def convert_ids_to_full_graph(I:list[list], N_offset):
+    updated_I = []
+    for row in I:
+        updated_row = [(x[0], x[1] + N_offset) for x in row]
+        updated_I.append(updated_row)
+    return updated_I
+
+
+def sort_subgraph_results(I:list[list[list]]):
+    sorted_I = []
+    for qid in range(len(I[0])):
+        sorted_res = []
+        for I_sub in I:
+            sorted_res.extend(I_sub[qid])
+            sorted_res.sort(key=lambda x: x[0])
+        sorted_I.append([x[1] for x in sorted_res])
+    return sorted_I
 
 def read_from_log(log_fname:str):
     """
@@ -51,8 +76,8 @@ def read_from_log(log_fname:str):
                 recall_1 = float(line.split(" ")[1])
             elif "recall_10:" in line:
                 recall_10 = float(line.split(" ")[1])
-            elif "node counter per query" in line:
-                node_counter = int(line.split(" ")[4])
+            elif "total node counter per query:" in line:
+                node_counter = int(line.split(" ")[5])
 
     return recall_1, recall_10, node_counter
 
@@ -60,23 +85,25 @@ def read_from_log(log_fname:str):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('--perf_df_path', type=str, default='perf_df.pickle')
     parser.add_argument('--dbname', type=str, default="SIFT1M", help='name of the database, e.g., SIFT10M, Deep10M, GLOVE')
     parser.add_argument('--ef_construction', type=int, default=128, help='ef construction parameter')
     parser.add_argument('--MD', type=int, default=64, help='Max degree of base layer, M * 2 === M0 == MD')
-    parser.add_argument('--ef_full', type=int, default=64, help='ef search parameter on full graph')
-    parser.add_argument('--ef_sub', type=int, default=64, help='ef search parameter on each sub-graph')
+    # parser.add_argument('--ef_full', type=int, default=64, help='ef search parameter on full graph')
+    # parser.add_argument('--ef_sub', type=int, default=64, help='ef search parameter on each sub-graph')
     parser.add_argument('--hnsw_path', type=str, default="../data/CPU_hnsw_indexes", help='Path to the HNSW index file')
     parser.add_argument('--subgraph_result_path', type=str, default="", help='Path to the subgraph search result')
-    parser.add_argument('--sub_graph_num', type=int, default=1, help='Number of partitions')
+    # parser.add_argument('--sub_graph_num', type=int, default=1, help='Number of partitions')
     args = parser.parse_args()
     
+    perf_df_path:str = args.perf_df_path
     dbname = args.dbname
     ef_construction = args.ef_construction
-    ef_full = args.ef_full
-    ef_sub = args.ef_sub
+    # ef_full = args.ef_full
+    # ef_sub = args.ef_sub
     hnsw_path = args.hnsw_path
     subgraph_result_path = args.subgraph_result_path
-    sub_graph_num = args.sub_graph_num
+    # sub_graph_num = args.sub_graph_num
     M = int(args.MD / 2)
     print("MD: {} Derived M in HNSW: {}".format(args.MD, M))
     
@@ -144,155 +171,178 @@ if __name__ == '__main__':
     print("Query vector xq: ", xq.shape)
     print("Ground truth gt: ", gt.shape)
 
+    key_columns = ['dataset', 'max_degree', 'mode', 'sub_graph_num','ef']
+    results_columns = ['recall_1', 'recall_10', 'node_counter']
+    columns = key_columns + results_columns
 
-    # Construct the full graph index
-    index_path_full = os.path.join(hnsw_path, '{}_index_MD{}_par1_0.bin'.format(dbname, args.MD))
-    if not os.path.exists(index_path_full):
-        # Load the entire graph and build full index
-        print(f"Start full index construction for [{dbname}]")
-        p_full = hnswlib.Index(space='l2', dim=xb.shape[1])  # possible options are l2, cosine or ip
-        p_full.init_index(max_elements=xb.shape[0], ef_construction=ef_construction, M=M)
-        p_full.add_items(xb)
-        p_full.save_index(index_path_full)
+    if os.path.exists(perf_df_path): # load existing
+        df = pd.read_pickle(perf_df_path)
+        assert len(df.columns.values) == len(columns)
+        for col in columns:
+            assert col in df.columns.values
+        print("Performance dataframe loaded")
     else:
-        # Load the index
-        print(f"Loading full index for [{dbname}]")
-        p_full = hnswlib.Index(space='l2', dim=xb.shape[1])
-        p_full.load_index(index_path_full)
+        print(f"Performance dataframe does not exist, create a new one: {perf_df_path}")
+        df = pd.DataFrame(columns=columns)
+    pd.set_option('display.expand_frame_repr', False)
+
+    
+    ef_list = [16, 32, 48, 64, 80, 96]  
+    sub_graph_num_list = [2, 4, 8, 16]
+      
+    for ef in ef_list:
+        for sub_graph_num in sub_graph_num_list:
         
-    # Construct the sub-graph indexes
-    p = []
-    for i in range(sub_graph_num):
+            print(f"Start search with ef = {ef}, sub_graph_num = {sub_graph_num}")
+            # Construct the full graph index
+            index_path_full = os.path.join(hnsw_path, '{}_index_MD{}_par1_0.bin'.format(dbname, args.MD))
+            if not os.path.exists(index_path_full):
+                # Load the entire graph and build full index
+                print(f"Start full index construction for [{dbname}]")
+                p_full = hnswlib.Index(space='l2', dim=xb.shape[1])  # possible options are l2, cosine or ip
+                p_full.init_index(max_elements=xb.shape[0], ef_construction=ef_construction, M=M)
+                p_full.add_items(xb)
+                p_full.save_index(index_path_full)
+            else:
+                print(f"Index file [{index_path_full}] already exists.")
+                # # Load the index
+                # print(f"Loading full index for [{dbname}]")
+                # p_full = hnswlib.Index(space='l2', dim=xb.shape[1])
+                # p_full.load_index(index_path_full)
+                
+            # Construct the sub-graph indexes
+            p = []
+            for i in range(sub_graph_num):
 
-        N_VEC = int(dbsize * 1000 * 1000 / sub_graph_num)
-        xb_sub = xb[i * N_VEC : (i+1) * N_VEC]
-        # print(xb_sub[0])
-        dim = xb_sub.shape[1] # should be 128
-        nq = xq.shape[0]
+                N_VEC = int(dbsize * 1000 * 1000 / sub_graph_num)
+                xb_sub = xb[i * N_VEC : (i+1) * N_VEC]
+                # print(xb_sub[0])
+                dim = xb_sub.shape[1] # should be 128
+                nq = xq.shape[0]
 
-        index_path_sub = os.path.join(hnsw_path, '{}_index_MD{}_par{}_{}.bin'.format(dbname, args.MD, sub_graph_num, i))
-        
-        # train index if not exist
-        if not os.path.exists(index_path_sub):
-            print(f"Start subgraph index construction for [{dbname}], subgraph [{i}]")
-            # Declaring index
-            p.append(hnswlib.Index(space='l2', dim=dim))  # possible options are l2, cosine or ip
+                index_path_sub = os.path.join(hnsw_path, '{}_index_MD{}_par{}_{}.bin'.format(dbname, args.MD, sub_graph_num, i))
+                
+                # train index if not exist
+                if not os.path.exists(index_path_sub):
+                    print(f"Start subgraph index construction for [{dbname}], subgraph [{i}]")
+                    # Declaring index
+                    p.append(hnswlib.Index(space='l2', dim=dim))  # possible options are l2, cosine or ip
+                    p[i].init_index(max_elements=N_VEC, ef_construction=ef_construction, M=M)
 
-            # Initing index
-            # max_elements - the maximum number of elements (capacity). Will throw an exception if exceeded
-            # during insertion of an element.
-            # The capacity can be increased by saving/loading the index, see below.
-            #
-            # ef_construction - controls index search speed/build speed tradeoff
-            #
-            # M - is tightly connected with internal dimensionality of the data. Strongly affects the memory consumption (~M)
-            # Higher M leads to higher accuracy/run_time at fixed ef/efConstruction
-            p[i].init_index(max_elements=N_VEC, ef_construction=ef_construction, M=M)
+                    batch_size = 10000
+                    batch_num = int(np.ceil(N_VEC / batch_size))
+                    for j in range(batch_num):
+                        # print("Adding {} th batch of {} elements".format(i, batch_size))
+                        xbatch = xb_sub[j * batch_size: (j + 1) * batch_size]
+                        p[i].add_items(xbatch)
+                    
+                    # Serializing and deleting the index:
+                    print("Saving index to '%s'" % index_path_sub)
+                    p[i].save_index(index_path_sub)
+                
+                else:
+                    print(f"Index file [{index_path_sub}] already exists.")
+                    # # Load the index
+                    # print(f"Loading subgraph index for [{dbname}], subgraph [{i}]")
+                    # p.append(hnswlib.Index(space='l2', dim=dim))
+                    # p[i].load_index(index_path_sub)
 
-            # Set number of threads used during batch search/construction
-            # By default using all available cores
-            # p.set_num_threads(16)
 
-            batch_size = 10000
-            batch_num = int(np.ceil(N_VEC / batch_size))
-            for j in range(batch_num):
-                # print("Adding {} th batch of {} elements".format(i, batch_size))
-                xbatch = xb_sub[j * batch_size: (j + 1) * batch_size]
-                p[i].add_items(xbatch)
+            # Run c++ binary for subgraph search
+            # SIFT1M /mnt/scratch/hanghu/CPU_hnsw_index/SIFT1M_index_MD64_par4 32 0 1 10000
+            hnsw_index_prefix = os.path.join(hnsw_path, '{}_index_MD{}_par{}'.format(dbname, args.MD, sub_graph_num))
+            # There are some fixed search parameters
+            cmd_hnsw_search = f"../hnswlib/build/main {dbname} {hnsw_index_prefix} {sub_graph_num} {ef} 0 1 10000 {subgraph_result_path} > {log_perf_test}"
+            print(f"Running sub-graph search command: {cmd_hnsw_search}")
+            os.system(cmd_hnsw_search)
+            _, _, node_counter_sub = read_from_log(log_perf_test)
             
-            # Serializing and deleting the index:
-            print("Saving index to '%s'" % index_path_sub)
-            p[i].save_index(index_path_sub)
+            # Run c++ binary for full graph search: sub_graph_num = 1
+            hnsw_index_prefix = os.path.join(hnsw_path, '{}_index_MD{}_par1'.format(dbname, args.MD))
+            cmd_hnsw_search = f"../hnswlib/build/main {dbname} {hnsw_index_prefix} 1 {ef} 0 1 10000 {subgraph_result_path} > {log_perf_test}"
+            print(f"Running full-graph search command: {cmd_hnsw_search}")
+            os.system(cmd_hnsw_search)
+            recall_1_full, recall_10_full, node_counter_full = read_from_log(log_perf_test)
+            
+            # os.system(f"rm {log_perf_test}")
+
+            # Convert sub-graph result ids to full graph ids
+            # and calculate recall
+            recall_1_sub = 0
+            recall_10_sub = 0
+            I = []
+            for i in range(sub_graph_num):
+                # read search result
+                subgraph_result_file = os.path.join(subgraph_result_path, f'{dbname}_{sub_graph_num}_{i}.txt')
+                I_sub = read_output_file(subgraph_result_file)
+                I_sub = convert_ids_to_full_graph(I_sub, i * N_VEC)
+                I.append(I_sub)
+                
+                # print(I_sub[0])
+            
+            # Merge and sort the sub-graph search results
+            sorted_I = sort_subgraph_results(I)
+            sorted_I = np.array(sorted_I)
+            
+            recall_1_sub = calculate_recall(sorted_I, gt, 1)
+            recall_10_sub = calculate_recall(sorted_I, gt, 10)
         
-        else:
-            # Load the index
-            print(f"Loading subgraph index for [{dbname}], subgraph [{i}]")
-            p.append(hnswlib.Index(space='l2', dim=dim))
-            p[i].load_index(index_path_sub)
+            # Save the full graph results to the dataframe
+            key_values = {
+                'dataset': dbname,
+                'max_degree': args.MD,
+                'mode': 'full',
+                'sub_graph_num': '1',
+                'ef': ef
+            }
+            
+            idx = df.index[(df['dataset'] == dbname) & \
+                            (df['max_degree'] == args.MD) & \
+                            (df['mode'] == 'full') & \
+                            (df['sub_graph_num'] == '1') & \
+                            (df['ef'] == ef)]
+            if len(idx) > 0:
+                print("Warning: duplicate entry found, deleting the old entry:")
+                print(df.loc[idx])
+                df = df.drop(idx)
+            print(f"Appending new entry:")
+            new_entry = {**key_values, 'recall_1': recall_1_full, 'recall_10': recall_10_full, 'node_counter': node_counter_full}
+            df = df.append(new_entry, ignore_index=True)
+            
+            # Save the sub-graph results to the dataframe
+            key_values = {
+                'dataset': dbname,
+                'max_degree': args.MD,
+                'mode': 'sub',
+                'sub_graph_num': sub_graph_num,
+                'ef': ef
+            }
+            
+            idx = df.index[(df['dataset'] == dbname) & \
+                            (df['max_degree'] == args.MD) & \
+                            (df['mode'] == 'sub') & \
+                            (df['sub_graph_num'] == sub_graph_num) & \
+                            (df['ef'] == ef)]
+            if len(idx) > 0:
+                print("Warning: duplicate entry found, deleting the old entry:")
+                print(df.loc[idx])
+                df = df.drop(idx)
+            print(f"Appending new entry:")
+            new_entry = {**key_values, 'recall_1': recall_1_sub, 'recall_10': recall_10_sub, 'node_counter': node_counter_sub}
+            df = df.append(new_entry, ignore_index=True)
 
-
-    # Run c++ binary for subgraph search
-    # SIFT1M /mnt/scratch/hanghu/CPU_hnsw_index/SIFT1M_index_MD64_par4 32 0 1 10000
-    hnsw_index_prefix = os.path.join(hnsw_path, '{}_index_MD{}_par{}'.format(dbname, args.MD, sub_graph_num))
-    # There are some fixed search parameters
-    cmd_hnsw_search = f"../hnswlib/build/main {dbname} {hnsw_index_prefix} {sub_graph_num} {ef_sub} 0 1 10000 {subgraph_result_path} > {log_perf_test}"
-    print(f"Running sub-graph search command: {cmd_hnsw_search}")
-    os.system(cmd_hnsw_search)
-    _, _, node_counter_sub = read_from_log(log_perf_test)
-    
-    # Run c++ binary for full graph search: sub_graph_num = 1
-    hnsw_index_prefix = os.path.join(hnsw_path, '{}_index_MD{}_par1'.format(dbname, args.MD))
-    cmd_hnsw_search = f"../hnswlib/build/main {dbname} {hnsw_index_prefix} 1 {ef_full} 0 1 10000 {subgraph_result_path} > {log_perf_test}"
-    print(f"Running full-graph search command: {cmd_hnsw_search}")
-    os.system(cmd_hnsw_search)
-    recall_1_full_ori, recall_10_full_ori, node_counter_full = read_from_log(log_perf_test)
-    
-    # os.system(f"rm {log_perf_test}")
-    
-    
-    # Build the verification graph index
-    index_path_ver = os.path.join(hnsw_path, '{}_index_ver.bin'.format(dbname))
-    if not os.path.exists(index_path_ver):
-        # build ver index
-        print(f"Start verification index construction for [{dbname}]")
-        p_ver = hnswlib.Index(space='l2', dim=xb.shape[1])  # possible options are l2, cosine or ip
-        p_ver.init_index(max_elements=xb.shape[0], ef_construction=256, M=128)
-        p_ver.add_items(xb)
-        p_ver.save_index(index_path_ver)
-        p_ver.set_ef(256)
-    else:
-        # Load the index
-        print(f"Loading verification index for [{dbname}]")
-        p_ver = hnswlib.Index(space='l2', dim=xb.shape[1])
-        p_ver.load_index(index_path_ver)
-        p_ver.set_ef(256)
-
-
-    # Convert sub-graph result ids to full graph ids
-    # and calculate recall
-    recall_1_sub = 0
-    recall_10_sub = 0
-    for i in range(sub_graph_num):
-        # read search result
-        subgraph_result_file = os.path.join(subgraph_result_path, f'{dbname}_{sub_graph_num}_{i}.txt')
-        res_id = np.loadtxt(subgraph_result_file)
-        
-        res_id = res_id.flatten()
-        res_items = p[i].get_items(res_id)
-        
-        # search in the full index
-        print("Searching in the verification index...")
-        I, _ = p_ver.knn_query(res_items, k=1)
-        # print(I[:10])
-        I = I.reshape(10000, 10)
-        # print(I[0])
-
-        recall_1_sub += calculate_recall(I, gt, 1)
-        recall_10_sub += calculate_recall(I, gt, 10)
-    
-    
-    # Measure the recall loss due to the conversion
-    # by comparing the recall_x_full_ori with recall_x_full_con
-    subgraph_result_file = os.path.join(subgraph_result_path, f'{dbname}_1_0.txt')
-    res_id = np.loadtxt(subgraph_result_file)
-    res_id = res_id.flatten()
-    res_items = p_full.get_items(res_id)
-    I, _ = p_ver.knn_query(res_items, k=1)
-    I = I.reshape(10000, 10)
-    recall_1_full_con = calculate_recall(I, gt, 1)
-    recall_10_full_con = calculate_recall(I, gt, 10)
-    
+    df.to_pickle(perf_df_path)
         
         
-    print("Sub-graph search recall@1: ", recall_1_sub)
-    print("Full graph search (ori) recall@1: ", recall_1_full_ori)
-    print("Full graph search (con) recall@1: ", recall_1_full_con)
-    print("Sub-graph search recall@10: ", recall_10_sub)
-    print("Full graph search (ori) recall@10: ", recall_10_full_ori)
-    print("Full graph search (con) recall@10: ", recall_10_full_con)
+        
+        
+    # print("Sub-graph search recall@1: ", recall_1_sub)
+    # print("Full graph search recall@1: ", recall_1_full)
+    # print("Sub-graph search recall@10: ", recall_10_sub)
+    # print("Full graph search recall@10: ", recall_10_full)
     
-    print("==============================================")
+    # print("==============================================")
     
-    print("Sub-graph search node counter (per query): ", node_counter_sub)
-    print("Full graph search node counter (per query): ", node_counter_full)    
+    # print("Sub-graph search node counter (per query): ", node_counter_sub)
+    # print("Full graph search node counter (per query): ", node_counter_full)    
     

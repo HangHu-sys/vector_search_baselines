@@ -9,12 +9,8 @@ To compare the search performance of the full graph approach and the sub-graph a
         Both of them are used for the c++ search and get_items() operation in conversion.
 
 Example Usage:
-    python construct_subgraph_hnsw.py \
-        --dbname SIFT1M \
-        --ef_construction 128 \
-        --MD 64 \
-        --hnsw_path /mnt/scratch/hanghu/CPU_hnsw_index \
-        --subgraph_result_path /mnt/scratch/hanghu/sub_graph_results
+    python construct_subgraph_hnsw.py --dbname SIFT1M --ef_construction 128 --MD 64 \
+        --hnsw_path ../data/CPU_hnsw_indexes --subgraph_result_path ../data/sub_graph_results
 """
 import argparse
 import sys
@@ -61,7 +57,7 @@ def sort_subgraph_results(I:list[list[list]]):
         sorted_I.append([x[1] for x in sorted_res])
     return sorted_I
 
-def read_from_log(log_fname:str):
+def read_from_log(log_fname:str, qnum=10000):
     """
     Read recall and node_count from the log file
     """
@@ -69,6 +65,7 @@ def read_from_log(log_fname:str):
     recall_1 = None
     recall_10 = None
 
+    node_counter_per_query = [[] for _ in range(qnum)]
     with open(log_fname, 'r') as file:
         lines = file.readlines()
         for idx, line in enumerate(lines):
@@ -78,14 +75,23 @@ def read_from_log(log_fname:str):
                 recall_10 = float(line.split(" ")[1])
             elif "total node counter per query:" in line:
                 node_counter = int(line.split(" ")[5])
+            elif "per query node count" in line:
+                # identify query id
+                # std::cout << "per query node count " << i <<  ": " ;
+                elements = line.replace("per query node count ", "").replace(":", "").split(" ") # ['0', '763', '713', '\n']
+                # print(elements)
+                qid = int(elements[0])
+                # print(qid)
+                node_counter_this_query = [int(e) for e in elements[1:-1]]
+                node_counter_per_query[qid] = node_counter_this_query
 
-    return recall_1, recall_10, node_counter
+    return recall_1, recall_10, node_counter, node_counter_per_query
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--perf_df_path', type=str, default='perf_df.pickle')
+    parser.add_argument('--perf_df_path', type=str, default='perf_subgraph_df.pickle')
     parser.add_argument('--dbname', type=str, default="SIFT1M", help='name of the database, e.g., SIFT10M, Deep10M, GLOVE')
     parser.add_argument('--ef_construction', type=int, default=128, help='ef construction parameter')
     parser.add_argument('--MD', type=int, default=64, help='Max degree of base layer, M * 2 === M0 == MD')
@@ -107,6 +113,8 @@ if __name__ == '__main__':
     M = int(args.MD / 2)
     print("MD: {} Derived M in HNSW: {}".format(args.MD, M))
     
+    if not os.path.exists(subgraph_result_path):
+        os.makedirs(subgraph_result_path)
     log_perf_test = 'hnsw_{}.log'.format(np.random.randint(1000000))
 
     if dbname.startswith('SIFT'):
@@ -172,7 +180,7 @@ if __name__ == '__main__':
     print("Ground truth gt: ", gt.shape)
 
     key_columns = ['dataset', 'max_degree', 'mode', 'sub_graph_num','ef']
-    results_columns = ['recall_1', 'recall_10', 'node_counter']
+    results_columns = ['recall_1', 'recall_10', 'node_counter', 'node_counter_per_query']
     columns = key_columns + results_columns
 
     if os.path.exists(perf_df_path): # load existing
@@ -187,7 +195,7 @@ if __name__ == '__main__':
     pd.set_option('display.expand_frame_repr', False)
 
     
-    ef_list = [16, 32, 48, 64, 80, 96]  
+    ef_list = [4, 8, 12, 16, 24, 32, 48, 64, 80, 96, 112, 128, 160, 192]  
     sub_graph_num_list = [2, 4, 8, 16]
       
     for ef in ef_list:
@@ -229,7 +237,7 @@ if __name__ == '__main__':
                     p.append(hnswlib.Index(space='l2', dim=dim))  # possible options are l2, cosine or ip
                     p[i].init_index(max_elements=N_VEC, ef_construction=ef_construction, M=M)
 
-                    batch_size = 10000
+                    batch_size = 10000 # add to graph
                     batch_num = int(np.ceil(N_VEC / batch_size))
                     for j in range(batch_num):
                         # print("Adding {} th batch of {} elements".format(i, batch_size))
@@ -248,21 +256,22 @@ if __name__ == '__main__':
                     # p[i].load_index(index_path_sub)
 
 
+            batch_size = 1 # to show per query node count, need to use batch size of 1
             # Run c++ binary for subgraph search
             # SIFT1M /mnt/scratch/hanghu/CPU_hnsw_index/SIFT1M_index_MD64_par4 32 0 1 10000
             hnsw_index_prefix = os.path.join(hnsw_path, '{}_index_MD{}_par{}'.format(dbname, args.MD, sub_graph_num))
             # There are some fixed search parameters
-            cmd_hnsw_search = f"../hnswlib/build/main {dbname} {hnsw_index_prefix} {sub_graph_num} {ef} 0 1 10000 {subgraph_result_path} > {log_perf_test}"
+            cmd_hnsw_search = f"../hnswlib/build/main {dbname} {hnsw_index_prefix} {sub_graph_num} {ef} 0 1 {batch_size} {subgraph_result_path} > {log_perf_test}"
             print(f"Running sub-graph search command: {cmd_hnsw_search}")
             os.system(cmd_hnsw_search)
-            _, _, node_counter_sub = read_from_log(log_perf_test)
+            _, _, node_counter_sub, node_counter_per_query_sub = read_from_log(log_perf_test)
             
             # Run c++ binary for full graph search: sub_graph_num = 1
             hnsw_index_prefix = os.path.join(hnsw_path, '{}_index_MD{}_par1'.format(dbname, args.MD))
-            cmd_hnsw_search = f"../hnswlib/build/main {dbname} {hnsw_index_prefix} 1 {ef} 0 1 10000 {subgraph_result_path} > {log_perf_test}"
+            cmd_hnsw_search = f"../hnswlib/build/main {dbname} {hnsw_index_prefix} 1 {ef} 0 1 {batch_size} {subgraph_result_path} > {log_perf_test}"
             print(f"Running full-graph search command: {cmd_hnsw_search}")
             os.system(cmd_hnsw_search)
-            recall_1_full, recall_10_full, node_counter_full = read_from_log(log_perf_test)
+            recall_1_full, recall_10_full, node_counter_full, node_counter_per_query_full = read_from_log(log_perf_test)
             
             # os.system(f"rm {log_perf_test}")
 
@@ -306,7 +315,7 @@ if __name__ == '__main__':
                 print(df.loc[idx])
                 df = df.drop(idx)
             print(f"Appending new entry:")
-            new_entry = {**key_values, 'recall_1': recall_1_full, 'recall_10': recall_10_full, 'node_counter': node_counter_full}
+            new_entry = {**key_values, 'recall_1': recall_1_full, 'recall_10': recall_10_full, 'node_counter': node_counter_full, 'node_counter_per_query': node_counter_per_query_full}
             df = df.append(new_entry, ignore_index=True)
             
             # Save the sub-graph results to the dataframe
@@ -328,10 +337,10 @@ if __name__ == '__main__':
                 print(df.loc[idx])
                 df = df.drop(idx)
             print(f"Appending new entry:")
-            new_entry = {**key_values, 'recall_1': recall_1_sub, 'recall_10': recall_10_sub, 'node_counter': node_counter_sub}
+            new_entry = {**key_values, 'recall_1': recall_1_sub, 'recall_10': recall_10_sub, 'node_counter': node_counter_sub, 'node_counter_per_query': node_counter_per_query_sub}
             df = df.append(new_entry, ignore_index=True)
 
-    df.to_pickle(perf_df_path)
+        df.to_pickle(perf_df_path)
         
         
         

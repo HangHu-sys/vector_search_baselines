@@ -23,15 +23,15 @@ python construct_faiss_knn.py --dbname SBERT1M --construct_K 200 --output_path .
 Second: construct NSG
 
 ```
-python run_all_construct_and_search.py --mode construct --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset SIFT1M
+python run_all_nsg_construct_and_search.py --mode construct --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset SIFT1M
 
-python run_all_construct_and_search.py --mode construct --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset SIFT10M
+python run_all_nsg_construct_and_search.py --mode construct --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset SIFT10M
 
-python run_all_construct_and_search.py --mode construct --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset Deep1M
+python run_all_nsg_construct_and_search.py --mode construct --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset Deep1M
 
-python run_all_construct_and_search.py --mode construct --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset Deep10M
+python run_all_nsg_construct_and_search.py --mode construct --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset Deep10M
 
-# python run_all_construct_and_search.py --mode construct --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset SBERT1M
+# python run_all_nsg_construct_and_search.py --mode construct --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset SBERT1M
 ```
 
 
@@ -76,9 +76,9 @@ Before running the following commands, make sure the configurations in the scrip
 
 Now run (make sure `max_cores` is properly set):
 ```
-python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset SIFT1M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
-python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset SIFT10M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
-python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset Deep1M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
-python run_all_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset Deep10M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
+python run_all_nsg_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset SIFT1M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
+python run_all_nsg_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset SIFT10M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
+python run_all_nsg_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset Deep1M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
+python run_all_nsg_construct_and_search.py --mode search --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search --dataset Deep10M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
 cp perf_df.pickle /mnt/scratch/wenqi/graph-vector-search-on-FPGA/plots/saved_perf_CPU/nsg.pickle
 ```

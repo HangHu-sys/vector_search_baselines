@@ -3,13 +3,13 @@ This script runs c++ nsg to either (a) construct index or (b) measure the recall
 
 Example Usage (construct):
 
-python run_all_construct_and_search.py --mode construct \
+python run_all_nsg_construct_and_search.py --mode construct \
     --input_knng_path ../data/CPU_knn_graphs --output_nsg_path ../data/CPU_NSG_index \
     --nsg_con_bin_path ../nsg/build/tests/test_nsg_index --dataset SIFT1M
 
 Example Usage (search):
 
-python run_all_construct_and_search.py --mode search \
+python run_all_nsg_construct_and_search.py --mode search \
     --nsg_search_bin_path ../nsg/build/tests/test_nsg_optimized_search \
     --dataset SIFT1M --perf_df_path perf_df.pickle --max_cores 16 --nruns 3
     

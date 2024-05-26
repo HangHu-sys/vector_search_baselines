@@ -3,7 +3,7 @@ This script runs ggnn to either (a) construct index or (b) measure the recall an
 
 Example Usage (construct):
 
-    python run_all_construct_and_search.py --mode construct \
+    python run_all_ggnn_construct_and_search.py --mode construct \
         --ggnn_index_path ../data/GPU_GGNN_GRAPH/ \
         --ggnn_bin_path ../ggnn/build_local/ \
         --dataset SIFT1M \
@@ -11,13 +11,12 @@ Example Usage (construct):
 
 Example Usage (search):
 
-    python run_all_construct_and_search.py --mode search \
+    python run_all_ggnn_construct_and_search.py --mode search \
         --ggnn_index_path ../data/GPU_GGNN_GRAPH/ \
         --ggnn_bin_path ../ggnn/build_local/ \
         --dataset SIFT1M \
         --gpu_id 3 \
-        --nruns 2
-
+        --nruns 3
 '''
 
 import os
@@ -65,6 +64,10 @@ def read_from_log(log_fname:str):
                 recall_10 = float(line.split(" ")[5])
             elif "Query_per_second:" in line:
                 qps = float(line.split(" ")[5])
+
+    # if more than 2 batches, remove the latency of the first and last batch
+    if len(latency_ms_per_batch) > 2:
+        latency_ms_per_batch = latency_ms_per_batch[1:-1]	
 
     return recall_1, recall_10, latency_ms_per_batch, qps
 
@@ -115,18 +118,18 @@ if __name__ == "__main__":
     # search_tauq_list = [0.3, 0.4, 0.5, 0.6, 0.7]
     # search_bs_list = [1, 2, 4, 8, 16, 10000]
     
-    construct_KBuild_list = [64]         # number of neighbors per point in the graph
+    construct_KBuild_list = [32, 64]         # number of neighbors per point in the graph
     construct_S_list = [64]              # segment/batch size (needs to be > KBuild-KF)
     construct_KQuery_list = [10]         # number of neighbors to search for
     construct_MaxIter_list = [400] # number of iterations for BFiS
     
-    search_KBuild_list = [64]           # should be subset of construct_KBuild_list
+    search_KBuild_list = [32, 64]           # should be subset of construct_KBuild_list
     search_S_list = [64]                # should be subset of construct_S_list
     search_KQuery_list = [10]
-    search_MaxIter_list = [1, 64, 100, 200, 400]
+    search_MaxIter_list = [1, 32, 64, 100, 200, 400]
     search_tauq_list = [0.5]
-    search_bs_list = [10000]
-    # search_bs_list = [1, 2, 4, 8, 16, 10000]
+    search_bs_list = [1, 2, 4, 8, 16, 10000]
+    # search_bs_list = [10000]
     
     # First make sure everything is compiled
     cmakelist_path = os.path.dirname(ggnn_bin_path)
@@ -146,7 +149,7 @@ if __name__ == "__main__":
     subprocess.run(["make"], cwd=ggnn_bin_path, check=True)
     
     # Now run the experiments
-    cmd_core = f"export CUDA_VISIBLE_DEVICES={gpu_id}"
+    cmd_core = f"export CUDA_VISIBLE_DEVICES={gpu_id}; "
     print(f"Setting CUDA_VISIBLE_DEVICES: {cmd_core}")
     os.system(cmd_core)
     
@@ -167,7 +170,7 @@ if __name__ == "__main__":
                     continue
                 else:
                     ggnn_bin = os.path.join(ggnn_bin_path, f"{ggnn_bin_prefix}_KB{KBuild}_S{S}_KQ{KQuery}_MI{MaxIter}")
-                    cmd_construct = f"{ggnn_bin} --dbname={dataset} --graph_filename={ggnn_index} --mode={int_mode} --log_dir=."
+                    cmd_construct = cmd_core + f"{ggnn_bin} --dbname={dataset} --graph_filename={ggnn_index} --mode={int_mode} --log_dir=."
                     print(f"Constructing GGNN index: {cmd_construct}")
                     os.system(cmd_construct)
 
@@ -218,7 +221,7 @@ if __name__ == "__main__":
                                     ggnn_bin = os.path.join(ggnn_bin_path, f"{ggnn_bin_prefix}_KB{KBuild}_S{S}_KQ{KQuery}_MI{MaxIter}")
                                     if not os.path.exists(ggnn_bin):
                                         raise ValueError(f"GGNN binary does not exist: {ggnn_bin}")
-                                    cmd_search = f"{ggnn_bin} " + \
+                                    cmd_search = cmd_core + f"{ggnn_bin} " + \
                                                 f"--dbname={dataset} " + \
                                                 f"--graph_filename={ggnn_index} " + \
                                                 f"--mode={int_mode} " + \
@@ -260,19 +263,12 @@ if __name__ == "__main__":
                                     print(df.loc[idx])
                                     df = df.drop(idx)
                                 print(f"Appending new entry:")
-                                # print(key_values)
-                                
                                 new_entry = {**key_values, 'recall_1': recall_1, 'recall_10': recall_10, 'latency_ms_per_batch': latency_ms_per_batch, 'qps': qps}
                                 print(new_entry)
-                                # df = pd.concat([df, pd.DataFrame.from_dict(new_entry)], ignore_index=True)
-                                df = df.append({**key_values, 'recall_1': recall_1, 'recall_10': recall_10, 'latency_ms_per_batch': latency_ms_per_batch, 'qps': qps}, ignore_index=True)
+                                df = df.append(new_entry, ignore_index=True)
                                         
-        df.to_pickle(perf_df_path, protocol=4)
+                    df.to_pickle(perf_df_path, protocol=4)
 
-    # with open(perf_df_path, 'rb') as file:
-    #     data = pickle.load(file)
-    # print(data["qps"])
-                
                         
                         
                         

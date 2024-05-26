@@ -1,6 +1,6 @@
 '''
 Sample command to run the script:
-    python run_all_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_search_bin_path ../hnswlib/build/main \
+    python run_all_hnsw_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_search_bin_path ../hnswlib/build/main \
         --perf_df_path perf_df.pickle --dataset SIFT1M --max_cores 16 --nruns 3
 '''
 

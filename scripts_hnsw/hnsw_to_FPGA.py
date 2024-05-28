@@ -35,6 +35,8 @@ if __name__ == "__main__":
         dim = 300
     elif "SBERT" in args.dbname:
         dim = 384
+    elif "SPACEV" in args.dbname:
+        dim = 100
     else:
         raise ValueError("Unsupported database name")
 

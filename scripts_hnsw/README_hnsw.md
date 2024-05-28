@@ -29,6 +29,16 @@ python construct_and_search_hnsw.py --dbname Deep10M --ef_construction 128 --MD 
 python construct_and_search_hnsw.py --dbname SBERT1M --ef_construction 128 --MD 64 --hnsw_path ../data/CPU_hnsw_indexes
 python construct_and_search_hnsw.py --dbname SBERT1M --ef_construction 128 --MD 32 --hnsw_path ../data/CPU_hnsw_indexes
 python construct_and_search_hnsw.py --dbname SBERT1M --ef_construction 128 --MD 16 --hnsw_path ../data/CPU_hnsw_indexes
+
+# SPACEV1M
+python construct_and_search_hnsw.py --dbname SPACEV1M --ef_construction 128 --MD 64 --hnsw_path ../data/CPU_hnsw_indexes
+python construct_and_search_hnsw.py --dbname SPACEV1M --ef_construction 128 --MD 32 --hnsw_path ../data/CPU_hnsw_indexes
+python construct_and_search_hnsw.py --dbname SPACEV1M --ef_construction 128 --MD 16 --hnsw_path ../data/CPU_hnsw_indexes
+
+# SPACEV10M
+python construct_and_search_hnsw.py --dbname SPACEV10M --ef_construction 128 --MD 64 --hnsw_path ../data/CPU_hnsw_indexes
+python construct_and_search_hnsw.py --dbname SPACEV10M --ef_construction 128 --MD 32 --hnsw_path ../data/CPU_hnsw_indexes
+python construct_and_search_hnsw.py --dbname SPACEV10M --ef_construction 128 --MD 16 --hnsw_path ../data/CPU_hnsw_indexes
 ```
 
 Second: convert to FPGA format:
@@ -58,6 +68,16 @@ python hnsw_to_FPGA.py --dbname Deep10M --CPU_index_path ../data/CPU_hnsw_indexe
 python hnsw_to_FPGA.py --dbname SBERT1M --CPU_index_path ../data/CPU_hnsw_indexes/SBERT1M_index_MD64.bin --FPGA_index_path ../data/FPGA_hnsw/SBERT1M_MD64
 python hnsw_to_FPGA.py --dbname SBERT1M --CPU_index_path ../data/CPU_hnsw_indexes/SBERT1M_index_MD32.bin --FPGA_index_path ../data/FPGA_hnsw/SBERT1M_MD32
 python hnsw_to_FPGA.py --dbname SBERT1M --CPU_index_path ../data/CPU_hnsw_indexes/SBERT1M_index_MD16.bin --FPGA_index_path ../data/FPGA_hnsw/SBERT1M_MD16
+
+# SPACEV1M
+python hnsw_to_FPGA.py --dbname SPACEV1M --CPU_index_path ../data/CPU_hnsw_indexes/SPACEV1M_index_MD64.bin --FPGA_index_path ../data/FPGA_hnsw/SPACEV1M_MD64
+python hnsw_to_FPGA.py --dbname SPACEV1M --CPU_index_path ../data/CPU_hnsw_indexes/SPACEV1M_index_MD32.bin --FPGA_index_path ../data/FPGA_hnsw/SPACEV1M_MD32
+python hnsw_to_FPGA.py --dbname SPACEV1M --CPU_index_path ../data/CPU_hnsw_indexes/SPACEV1M_index_MD16.bin --FPGA_index_path ../data/FPGA_hnsw/SPACEV1M_MD16
+
+# SPACEV10M
+python hnsw_to_FPGA.py --dbname SPACEV10M --CPU_index_path ../data/CPU_hnsw_indexes/SPACEV10M_index_MD64.bin --FPGA_index_path ../data/FPGA_hnsw/SPACEV10M_MD64
+python hnsw_to_FPGA.py --dbname SPACEV10M --CPU_index_path ../data/CPU_hnsw_indexes/SPACEV10M_index_MD32.bin --FPGA_index_path ../data/FPGA_hnsw/SPACEV10M_MD32
+python hnsw_to_FPGA.py --dbname SPACEV10M --CPU_index_path ../data/CPU_hnsw_indexes/SPACEV10M_index_MD16.bin --FPGA_index_path ../data/FPGA_hnsw/SPACEV10M_MD16
 ```
 
 ## Evaluate CPU latency & throughput

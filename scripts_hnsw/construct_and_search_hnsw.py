@@ -8,6 +8,7 @@ python construct_and_search_hnsw.py --dbname SIFT1M --ef_construction 128 --MD 6
 python construct_and_search_hnsw.py --dbname Deep1M --ef_construction 128 --MD 64 --hnsw_path ../data/CPU_hnsw_indexes
 python construct_and_search_hnsw.py --dbname GLOVE --ef_construction 128 --MD 64 --hnsw_path ../data/CPU_hnsw_indexes
 python construct_and_search_hnsw.py --dbname SBERT1M --ef_construction 128 --MD 64 --hnsw_path ../data/CPU_hnsw_indexes
+python construct_and_search_hnsw.py --dbname SPACEV1M --ef_construction 128 --MD 64 --hnsw_path ../data/CPU_hnsw_indexes
 """
 import argparse
 import sys
@@ -18,7 +19,7 @@ import hnswlib
 import numpy as np
 
 from utils import mmap_fvecs, mmap_bvecs, ivecs_read, fvecs_read, mmap_bvecs_SBERT, \
-    read_deep_ibin, read_deep_fbin, print_recall
+    read_deep_ibin, read_deep_fbin, read_spacev_int8bin, print_recall
 
 if __name__ == '__main__':
 
@@ -87,6 +88,24 @@ if __name__ == '__main__':
         # trim to correct size
         xb = xb[:dbsize * 1000 * 1000]
         
+    elif dbname.startswith('SPACEV'):
+        """  
+        >>> vec_count = struct.unpack('i', fvec.read(4))[0]
+        >>> vec_count
+        1402020720
+        >>> vec_dimension = struct.unpack('i', fvec.read(4))[0]
+        >>> vec_dimension
+        100
+        """
+        dbsize = int(dbname[6:-1])
+        dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/SPACEV'
+        xb = read_spacev_int8bin(os.path.join(dataset_dir, 'vectors_all.bin'))
+        xq = read_spacev_int8bin(os.path.join(dataset_dir, 'query_10K.bin'))
+
+        # trim xb to correct size
+        xb = xb[:dbsize * 1000 * 1000]
+        gt = read_deep_ibin(os.path.join(dataset_dir, 'gt_idx_%dM.ibin' % dbsize))
+
     else:
         print('unknown dataset', dbname, file=sys.stderr)
         sys.exit(1)
@@ -156,9 +175,10 @@ if __name__ == '__main__':
 
         # Controlling the recall by setting ef:
         # higher ef leads to better accuracy, but slower search
-        ef_set = [64]
-        # ef_set = [8, 16, 32, 64, 128, 256]
-        batch_size_set = [1, 4, 16, 64, 256, 1024, 10000]
+        # ef_set = [64]
+        ef_set = [8, 16, 32, 64, 128, 256]
+        # batch_size_set = [1, 4, 16, 64, 256, 1024, 10000]
+        batch_size_set = [10000]
         num_threads_set = [1,32]
         # num_threads_set = [1, 2, 4, 8, 16, 32, 0]
         k_set = [10]

@@ -313,6 +313,7 @@ class HNSW_index():
                 byte_array_ground_vectors += struct.pack('f', vector[j])
             if len(byte_array_ground_vectors) % 64 != 0:
                 byte_array_ground_vectors += b'\x00' * (64 - len(byte_array_ground_vectors) % 64)
+			# -1 used for visited flag
             byte_array_ground_vectors += b'\xff\xff\xff\xff' # -1 in int32
             byte_array_ground_vectors += b'\x00' * 60
         assert len(byte_array_ground_vectors) == self.cur_element_count * num_bytes_per_vector_with_padding

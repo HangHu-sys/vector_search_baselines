@@ -5,6 +5,8 @@ Example Usage:
     python construct_faiss_knn.py --dbname Deep1M --construct_K 200 --output_path ../data/CPU_knn_graphs
     python construct_faiss_knn.py --dbname Deep10M --construct_K 200 --output_path ../data/CPU_knn_graphs
     python construct_faiss_knn.py --dbname SBERT1M --construct_K 200 --output_path ../data/CPU_knn_graphs
+    python construct_faiss_knn.py --dbname SPACEV1M --construct_K 200 --output_path ../data/CPU_knn_graphs
+    python construct_faiss_knn.py --dbname SPACEV10M --construct_K 200 --output_path ../data/CPU_knn_graphs
 """
 
 
@@ -62,6 +64,13 @@ if __name__ == "__main__":
         xb = read_spacev_int8bin(os.path.join(dataset_dir, 'vectors_all.bin'))
         xb = xb[:dbsize * 1000 * 1000]
         
+    elif dbname.startswith('SPACEV'):
+        dbsize = int(dbname[6:-1])
+        dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/SPACEV'
+        xb = read_spacev_int8bin(os.path.join(dataset_dir, 'vectors_all.bin'))
+
+        # trim xb to correct size
+        xb = xb[:dbsize * 1000 * 1000]
     print("Data loaded: ", xb.shape)
     
     X = xb

@@ -16,6 +16,8 @@ python run_all_ggnn_construct_and_search.py --mode construct --ggnn_index_path .
 python run_all_ggnn_construct_and_search.py --mode construct --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SIFT10M --gpu_id 2
 python run_all_ggnn_construct_and_search.py --mode construct --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset Deep1M --gpu_id 2
 python run_all_ggnn_construct_and_search.py --mode construct --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset Deep10M --gpu_id 2
+python run_all_ggnn_construct_and_search.py --mode construct --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SPACEV1M --gpu_id 2
+python run_all_ggnn_construct_and_search.py --mode construct --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SPACEV10M --gpu_id 2
 ```
 
 ## Evaluate GPU latency & throughput
@@ -37,10 +39,12 @@ In `run_all_ggnn_construct_and_search.py`, make sure the search parameters are c
 
 Run search. Make sure to fill the right GPU ID for servers with multiple GPUs:
 ```
-python run_all_ggnn_construct_and_search.py --mode search --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SIFT1M --gpu_id 2 --nruns 3
-python run_all_ggnn_construct_and_search.py --mode search --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SIFT10M --gpu_id 2 --nruns 3
-python run_all_ggnn_construct_and_search.py --mode search --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset Deep1M --gpu_id 2 --nruns 3
-python run_all_ggnn_construct_and_search.py --mode search --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset Deep10M --gpu_id 2 --nruns 3
+python run_all_ggnn_construct_and_search.py --mode search --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SIFT1M --gpu_id 2 --nruns 3 --perf_df_path perf_df_ggnn_gpu.pickle
+python run_all_ggnn_construct_and_search.py --mode search --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SIFT10M --gpu_id 2 --nruns 3 --perf_df_path perf_df_ggnn_gpu.pickle
+python run_all_ggnn_construct_and_search.py --mode search --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset Deep1M --gpu_id 2 --nruns 3 --perf_df_path perf_df_ggnn_gpu.pickle
+python run_all_ggnn_construct_and_search.py --mode search --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset Deep10M --gpu_id 2 --nruns 3 --perf_df_path perf_df_ggnn_gpu.pickle
+python run_all_ggnn_construct_and_search.py --mode search --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SPACEV1M --gpu_id 2 --nruns 3 --perf_df_path perf_df_ggnn_gpu.pickle
+python run_all_ggnn_construct_and_search.py --mode search --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SPACEV10M --gpu_id 2 --nruns 3 --perf_df_path perf_df_ggnn_gpu.pickle
 ```
 
 ## Notes on GGNN

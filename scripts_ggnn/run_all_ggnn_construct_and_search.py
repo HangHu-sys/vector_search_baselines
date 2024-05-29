@@ -130,7 +130,7 @@ if __name__ == "__main__":
     search_KQuery_list = [10]
     search_MaxIter_list = [1, 32, 64, 100, 200, 400]
     search_tauq_list = [0.5]
-    search_bs_list = [1, 2, 4, 8, 16, 10000]
+    search_bs_list = [1, 2, 4, 8, 16, 32, 10000]
     # search_bs_list = [10000]
     
     # First make sure everything is compiled

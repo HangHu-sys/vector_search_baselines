@@ -16,7 +16,7 @@ import struct
 import sys
 
 from utils import mmap_fvecs, mmap_bvecs, ivecs_read, fvecs_read, mmap_bvecs_SBERT, \
-    read_deep_ibin, read_deep_fbin
+    read_deep_ibin, read_deep_fbin, read_spacev_int8bin
 
 class NSGConverter():
     
@@ -208,7 +208,25 @@ if __name__ == "__main__":
 
         # trim to correct size
         xb = xb[:dbsize * 1000 * 1000]
-        
+      
+    elif dbname.startswith('SPACEV'):
+        """  
+        >>> vec_count = struct.unpack('i', fvec.read(4))[0]
+        >>> vec_count
+        1402020720
+        >>> vec_dimension = struct.unpack('i', fvec.read(4))[0]
+        >>> vec_dimension
+        100
+        """
+        dbsize = int(dbname[6:-1])
+        dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/SPACEV'
+        xb = read_spacev_int8bin(os.path.join(dataset_dir, 'vectors_all.bin'))
+        xq = read_spacev_int8bin(os.path.join(dataset_dir, 'query_10K.bin'))
+
+        # trim xb to correct size
+        xb = xb[:dbsize * 1000 * 1000]
+        gt = read_deep_ibin(os.path.join(dataset_dir, 'gt_idx_%dM.ibin' % dbsize))
+  
     else:
         print('unknown dataset', dbname, file=sys.stderr)
         sys.exit(1)

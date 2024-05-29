@@ -173,3 +173,29 @@ def write_deep_ibin(filename, vecs, dtype='int32'):
         else:
             print("Unsupported datatype ", dtype)
             raise ValueError
+
+def read_spacev_int8bin(filename):
+    """
+    Read *.fbin file that contains int8 vectors
+
+    All embedding data is stored in .bin format:
+    [num_vectors (uint32), vector_dim (uint32), vector_array (int8)]
+
+    The groundtruth is stored in .ibin format:
+    [num_vectors (uint32), vector_dim (uint32), vector_array (int32)]
+    
+	>>> vec_count = struct.unpack('i', fvec.read(4))[0]
+	>>> vec_count
+	1402020720
+	>>> vec_dimension = struct.unpack('i', fvec.read(4))[0]
+	>>> vec_dimension
+	100
+
+    https://github.com/microsoft/SPTAG/tree/main/datasets/SPACEV1B
+    """
+    with open(filename, "rb") as f:
+        # nvecs_total means the total number of vectors across all partitions
+        nvecs_total, dim = np.fromfile(f, count=2, dtype=np.int32) 
+        
+    arr = np.memmap(filename, dtype=np.int8, offset=8, mode='r')
+    return arr.reshape(nvecs_total, dim)

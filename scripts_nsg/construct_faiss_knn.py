@@ -13,7 +13,7 @@ import os
 import numpy as np
 import struct
 import argparse
-from utils import mmap_bvecs, mmap_bvecs_SBERT, read_deep_fbin, read_deep_ibin
+from utils import mmap_bvecs, mmap_bvecs_SBERT, read_deep_fbin, read_deep_ibin, read_spacev_int8bin
 
 if __name__ == "__main__":
 
@@ -44,16 +44,22 @@ if __name__ == "__main__":
         dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/deep1b'
 
         xb = read_deep_fbin(os.path.join(dataset_dir, 'base.1B.fbin'))
-        xq = read_deep_fbin(os.path.join(dataset_dir, 'query.public.10K.fbin'))
+
         # trim xb to correct size
         xb = xb[:dbsize * 1000 * 1000]
  
-    elif dbname.startswith('SBERT1M'):
-        dbsize = 1
+    elif dbname.startswith('SBERT'):
+        dbsize = int(dbname[5:-1])
         dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/sbert'
         xb = mmap_bvecs_SBERT(os.path.join(dataset_dir, 'sbert1M.fvecs'))
         
         # trim xb to correct size
+        xb = xb[:dbsize * 1000 * 1000]
+    
+    elif dbname.startswith('SPACEV'):
+        dbsize = int(dbname[6:-1])
+        dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/SPACEV'
+        xb = read_spacev_int8bin(os.path.join(dataset_dir, 'vectors_all.bin'))
         xb = xb[:dbsize * 1000 * 1000]
         
     print("Data loaded: ", xb.shape)

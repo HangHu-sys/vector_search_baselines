@@ -105,6 +105,8 @@ if __name__ == "__main__":
         ggnn_bin_prefix = "sift"
     elif "Deep" in dataset:
         ggnn_bin_prefix = "deep"
+    elif "SPACEV" in dataset:
+        ggnn_bin_prefix = "spacev"
 
     # construct_KBuild_list = [24, 40]         # number of neighbors per point in the graph
     # construct_S_list = [32, 64]              # segment/batch size (needs to be > KBuild-KF)

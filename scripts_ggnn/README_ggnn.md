@@ -47,6 +47,45 @@ python run_all_ggnn_construct_and_search.py --mode search --ggnn_index_path ../d
 python run_all_ggnn_construct_and_search.py --mode search --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SPACEV10M --gpu_id 2 --nruns 3 --perf_df_path perf_df_ggnn_gpu.pickle
 ```
 
+## Evaluate GPU energy 
+
+Use two terminals, one for executing the program, the other for tracking energy.
+
+```
+# SIFT10M
+python run_all_ggnn_inf_search.py --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SIFT10M \
+        --KBuild 64 --S 64 --KQuery 10 --MaxIter 400 --tauq 0.5 --bs 1 --gpu_id 0 
+nvidia-smi -l 1 > log_energy_gpu_ggnn_SIFT10M_batch_1
+python run_all_ggnn_inf_search.py --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SIFT10M \
+        --KBuild 64 --S 64 --KQuery 10 --MaxIter 400 --tauq 0.5 --bs 16 --gpu_id 0 
+nvidia-smi -l 1 > log_energy_gpu_ggnn_SIFT10M_batch_16
+python run_all_ggnn_inf_search.py --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SIFT10M \
+        --KBuild 64 --S 64 --KQuery 10 --MaxIter 400 --tauq 0.5 --bs 10000 --gpu_id 0 
+nvidia-smi -l 1 > log_energy_gpu_ggnn_SIFT10M_batch_10000
+
+# Deep10M
+python run_all_ggnn_inf_search.py --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset Deep10M \
+        --KBuild 64 --S 64 --KQuery 10 --MaxIter 400 --tauq 0.5 --bs 1 --gpu_id 0 
+nvidia-smi -l 1 > log_energy_gpu_ggnn_Deep10M_batch_1
+python run_all_ggnn_inf_search.py --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset Deep10M \
+        --KBuild 64 --S 64 --KQuery 10 --MaxIter 400 --tauq 0.5 --bs 16 --gpu_id 0 
+nvidia-smi -l 1 > log_energy_gpu_ggnn_Deep10M_batch_16
+python run_all_ggnn_inf_search.py --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset Deep10M \
+        --KBuild 64 --S 64 --KQuery 10 --MaxIter 400 --tauq 0.5 --bs 10000 --gpu_id 0 
+nvidia-smi -l 1 > log_energy_gpu_ggnn_Deep10M_batch_10000
+
+# SPACEV10M
+python run_all_ggnn_inf_search.py --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SPACEV10M \
+        --KBuild 64 --S 64 --KQuery 10 --MaxIter 400 --tauq 0.5 --bs 1 --gpu_id 0 
+nvidia-smi -l 1 > log_energy_gpu_ggnn_SPACEV10M_batch_1
+python run_all_ggnn_inf_search.py --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SPACEV10M \
+        --KBuild 64 --S 64 --KQuery 10 --MaxIter 400 --tauq 0.5 --bs 16 --gpu_id 0 
+nvidia-smi -l 1 > log_energy_gpu_ggnn_SPACEV10M_batch_16
+python run_all_ggnn_inf_search.py --ggnn_index_path ../data/GPU_GGNN_GRAPH/ --ggnn_bin_path ../ggnn/build_local/ --dataset SPACEV10M \
+        --KBuild 64 --S 64 --KQuery 10 --MaxIter 400 --tauq 0.5 --bs 10000 --gpu_id 0 
+nvidia-smi -l 1 > log_energy_gpu_ggnn_SPACEV10M_batch_10000
+```
+
 ## Notes on GGNN
 
 @Hang e.g., what are the main files used for evaluataion? what are the main parameters, etc.

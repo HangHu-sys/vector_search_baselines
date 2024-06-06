@@ -99,7 +99,7 @@ python run_all_nsg_construct_and_search.py --mode search --nsg_search_bin_path .
 cp perf_df_nsg_cpu.pickle /mnt/scratch/wenqi/graph-vector-search-on-FPGA/plots/saved_perf_CPU/nsg.pickle
 ```
 
-## Evaluate CPU HNSW energy 
+## Evaluate CPU NSG energy 
 
 Use two terminals, one for executing the program, the other for tracking energy.
 

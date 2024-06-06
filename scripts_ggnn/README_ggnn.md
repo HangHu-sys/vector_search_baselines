@@ -89,3 +89,35 @@ nvidia-smi -l 1 > log_energy_gpu_ggnn_SPACEV10M_batch_10000
 ## Notes on GGNN
 
 @Hang e.g., what are the main files used for evaluataion? what are the main parameters, etc.
+
+Main ggnn files used for evaluation includes: `sift.cu`, `deep.cu` and `spacev.cu` (see `ggnn/src/`) depending on the targeted dataset. For index construction, GGNN latency and throughput evaluation, see `run_all_ggnn_construct_and_search.py`. For energy evaluation, see `run_all_ggnn_inf_search.py`.
+
+In GGNN construction mode, 2 main parameters are involved as follows. Output index file will be named as `{dataset}_KB{KBuild}_S{S}.bin`.
+
+* `KBuild`: Number of neighbors per point in the graph.
+
+* `S`: Segment/batch size (needs to be > KBuild/2).
+
+In GGNN search mode, 6 main parameters are involved as follows. Note that here `Kbuild` and `S` are used to locate the index file.
+
+* `KBuild`: Number of neighbors per point in the graph (degree).
+
+* `S`: Segment/batch size (needs to be > KBuild/2).
+
+* `KQuery`: Number of neighbors to search for (similar to `L` in NSG and `ef` in HNSW).
+
+* `MaxIter`: Number of iterations for BFiS (hard upper bound).
+
+* `tauq`: Parameter tau for query, balancing between the search performance and recall.
+
+* `bs`: Batch size.
+
+In addition, there are several fixed parameters in search mode which can also be tuned manually (e.g. see `sift.cu`).
+
+* `L`: Graph height / number of layers (4 usually performs best).
+
+* `BLOCK_DIM_X`
+
+* `CACHE_SIZE`
+
+* `SORTED_SIZE`

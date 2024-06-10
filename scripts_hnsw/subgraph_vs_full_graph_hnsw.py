@@ -22,7 +22,7 @@ import hnswlib
 import numpy as np
 
 from utils import mmap_fvecs, mmap_bvecs, ivecs_read, fvecs_read, mmap_bvecs_SBERT, \
-    read_deep_ibin, read_deep_fbin, print_recall, calculate_recall
+    read_deep_ibin, read_deep_fbin, print_recall, calculate_recall, read_spacev_int8bin
 
 
 def read_output_file(filename):
@@ -32,8 +32,8 @@ def read_output_file(filename):
             elements = line.split()
             row = []
             for i in range(0, len(elements), 2):
-                first = int(elements[i])
-                second = int(elements[i + 1])
+                first = float(elements[i])
+                second = float(elements[i + 1])
                 row.append((first, second))
             I.append(row)
     return I
@@ -168,6 +168,15 @@ if __name__ == '__main__':
         gt = read_deep_ibin(os.path.join(dataset_dir, 'gt_idx_%dM.ibin' % dbsize))
 
         # trim to correct size
+        xb = xb[:dbsize * 1000 * 1000]
+    
+    elif dbname.startswith('SPACEV1M'):
+        dbsize = 1
+        dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/SPACEV'
+        xb = read_spacev_int8bin(os.path.join(dataset_dir, 'vectors_all.bin'))
+        xq = read_spacev_int8bin(os.path.join(dataset_dir, 'query_10K.bin'))
+        gt = read_deep_ibin(os.path.join(dataset_dir, 'gt_idx_%dM.ibin' % dbsize))
+        
         xb = xb[:dbsize * 1000 * 1000]
         
     else:

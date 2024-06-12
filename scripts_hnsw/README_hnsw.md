@@ -110,35 +110,35 @@ Use two terminals, one for executing the program, the other for tracking energy.
 # SIFT10M
 python run_all_hnsw_inf_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_inf_search_bin_path ../hnswlib/build/inf_search \
      --dataset SIFT10M --max_cores 16 --max_degree 64 --ef 64 --omp 1 --batch_size 1
-nvidia-smi -l 1 > log_energy_cpu_hnsw_SIFT10M_batch_1
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_hnsw_SIFT10M_batch_1
 python run_all_hnsw_inf_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_inf_search_bin_path ../hnswlib/build/inf_search \
      --dataset SIFT10M --max_cores 16 --max_degree 64 --ef 64 --omp 1 --batch_size 16
-nvidia-smi -l 1 > log_energy_cpu_hnsw_SIFT10M_batch_16
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_hnsw_SIFT10M_batch_16
 python run_all_hnsw_inf_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_inf_search_bin_path ../hnswlib/build/inf_search \
      --dataset SIFT10M --max_cores 16 --max_degree 64 --ef 64 --omp 1 --batch_size 10000
-nvidia-smi -l 1 > log_energy_cpu_hnsw_SIFT10M_batch_10000
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_hnsw_SIFT10M_batch_10000
 
 # Deep10M
 python run_all_hnsw_inf_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_inf_search_bin_path ../hnswlib/build/inf_search \
      --dataset Deep10M --max_cores 16 --max_degree 64 --ef 64 --omp 1 --batch_size 1
-nvidia-smi -l 1 > log_energy_cpu_hnsw_Deep10M_batch_1
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_hnsw_Deep10M_batch_1
 python run_all_hnsw_inf_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_inf_search_bin_path ../hnswlib/build/inf_search \
      --dataset Deep10M --max_cores 16 --max_degree 64 --ef 64 --omp 1 --batch_size 16
-nvidia-smi -l 1 > log_energy_cpu_hnsw_Deep10M_batch_16
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_hnsw_Deep10M_batch_16
 python run_all_hnsw_inf_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_inf_search_bin_path ../hnswlib/build/inf_search \
      --dataset Deep10M --max_cores 16 --max_degree 64 --ef 64 --omp 1 --batch_size 10000
-nvidia-smi -l 1 > log_energy_cpu_hnsw_Deep10M_batch_10000
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_hnsw_Deep10M_batch_10000
 
 # SPACEV10M
 python run_all_hnsw_inf_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_inf_search_bin_path ../hnswlib/build/inf_search \
      --dataset SPACEV10M --max_cores 16 --max_degree 64 --ef 64 --omp 1 --batch_size 1
-nvidia-smi -l 1 > log_energy_cpu_hnsw_SPACEV10M_batch_1
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_hnsw_SPACEV10M_batch_1
 python run_all_hnsw_inf_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_inf_search_bin_path ../hnswlib/build/inf_search \
      --dataset SPACEV10M --max_cores 16 --max_degree 64 --ef 64 --omp 1 --batch_size 16
-nvidia-smi -l 1 > log_energy_cpu_hnsw_SPACEV10M_batch_16
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_hnsw_SPACEV10M_batch_16
 python run_all_hnsw_inf_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --hnsw_inf_search_bin_path ../hnswlib/build/inf_search \
      --dataset SPACEV10M --max_cores 16 --max_degree 64 --ef 64 --omp 1 --batch_size 10000
-nvidia-smi -l 1 > log_energy_cpu_hnsw_SPACEV10M_batch_10000
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_hnsw_SPACEV10M_batch_10000
 ```
 
 ## Explore the relationship between a big graph versus several sub-graphs

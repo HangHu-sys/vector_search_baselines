@@ -228,6 +228,7 @@ elif dbname.startswith('SPACEV'):
     dataset_dir = '/mnt/scratch/wenqi/Faiss_experiments/SPACEV'
     xb = read_spacev_int8bin(os.path.join(dataset_dir, 'vectors_all.bin'))
     xq = read_spacev_int8bin(os.path.join(dataset_dir, 'query_10K.bin'))
+    xq = xq.astype('float32').copy()
 
     # trim xb to correct size
     xb = xb[:dbsize * 1000 * 1000]
@@ -395,27 +396,27 @@ elif args.mode == 'run_all':
 
 elif args.mode == 'energy':
 
-	print("Started running search for energy consumption measurement...")
-	while True:
-		for param in parametersets:
-			print(param, '\t', end=' ')
-			sys.stdout.flush()
-			if index_key != 'Flat':
-				ps.set_index_parameters(index, param)
+    print("Started running search for energy consumption measurement...")
+    while True:
+        for param in parametersets:
+            print(param, '\t', end=' ')
+            sys.stdout.flush()
+            if index_key != 'Flat':
+                ps.set_index_parameters(index, param)
 
-			I = np.empty((nq, topK), dtype='int32')
-			D = np.empty((nq, topK), dtype='float32')
+            I = np.empty((nq, topK), dtype='int32')
+            D = np.empty((nq, topK), dtype='float32')
 
-			ivfpq_stats.reset()
-			ivf_stats.reset()
+            ivfpq_stats.reset()
+            ivf_stats.reset()
 
-			i0 = 0
-			while i0 < nq:
-				if i0 + args.qbs < nq:
-					i1 = i0 + args.qbs
-				else:
-					i1 = nq
-				Di, Ii = index.search(xq[i0:i1], topK)
-				I[i0:i1] = Ii
-				D[i0:i1] = Di
-				i0 = i1
+            i0 = 0
+            while i0 < nq:
+                if i0 + args.qbs < nq:
+                    i1 = i0 + args.qbs
+                else:
+                    i1 = nq
+                Di, Ii = index.search(xq[i0:i1], topK)
+                I[i0:i1] = Ii
+                D[i0:i1] = Di
+                i0 = i1

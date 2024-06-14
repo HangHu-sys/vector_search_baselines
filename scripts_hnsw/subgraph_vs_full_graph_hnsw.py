@@ -9,7 +9,7 @@ To compare the search performance of the full graph approach and the sub-graph a
         Both of them are used for the c++ search and get_items() operation in conversion.
 
 Example Usage:
-    python construct_subgraph_hnsw.py --dbname SIFT1M --ef_construction 128 --MD 64 \
+    python subgraph_vs_full_graph_hnsw.py --dbname SIFT1M --ef_construction 128 --MD 64 \
         --hnsw_path ../data/CPU_hnsw_indexes --subgraph_result_path ../data/sub_graph_results
 """
 import argparse
@@ -270,14 +270,14 @@ if __name__ == '__main__':
             # SIFT1M /mnt/scratch/hanghu/CPU_hnsw_index/SIFT1M_index_MD64_par4 32 0 1 10000
             hnsw_index_prefix = os.path.join(hnsw_path, '{}_index_MD{}_par{}'.format(dbname, args.MD, sub_graph_num))
             # There are some fixed search parameters
-            cmd_hnsw_search = f"../hnswlib/build/main {dbname} {hnsw_index_prefix} {sub_graph_num} {ef} 0 1 {batch_size} {subgraph_result_path} > {log_perf_test}"
+            cmd_hnsw_search = f"../hnswlib/build/subgraph {dbname} {hnsw_index_prefix} {sub_graph_num} {ef} 0 1 {batch_size} {subgraph_result_path} > {log_perf_test}"
             print(f"Running sub-graph search command: {cmd_hnsw_search}")
             os.system(cmd_hnsw_search)
             _, _, node_counter_sub, node_counter_per_query_sub = read_from_log(log_perf_test)
             
             # Run c++ binary for full graph search: sub_graph_num = 1
             hnsw_index_prefix = os.path.join(hnsw_path, '{}_index_MD{}_par1'.format(dbname, args.MD))
-            cmd_hnsw_search = f"../hnswlib/build/main {dbname} {hnsw_index_prefix} 1 {ef} 0 1 {batch_size} {subgraph_result_path} > {log_perf_test}"
+            cmd_hnsw_search = f"../hnswlib/build/subgraph {dbname} {hnsw_index_prefix} 1 {ef} 0 1 {batch_size} {subgraph_result_path} > {log_perf_test}"
             print(f"Running full-graph search command: {cmd_hnsw_search}")
             os.system(cmd_hnsw_search)
             recall_1_full, recall_10_full, node_counter_full, node_counter_per_query_full = read_from_log(log_perf_test)

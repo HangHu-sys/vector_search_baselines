@@ -19,3 +19,24 @@ Processing '/etc/joe/editorrc'...
 Processing '/etc/joe/ftyperc'...
 Finished processing /etc/joe/ftyperc
 Finished processing /etc/joe/editorrc
+
+*** These modified files were found in JOE when it aborted on Fri Jun 14 15:19:19 2024
+*** JOE was aborted by UNIX signal 1
+
+*** File '/pub/scratch/hanghu/hnsw_experiments/.git/MERGE_MSG'
+Merge branch 'main' of github.com:PomeloTea0726/hnsw_experiments
+# Please enter a commit message to explain why this merge is necessary,
+# especially if it merges an updated upstream into a topic branch.
+#
+# Lines starting with '#' will be ignored, and an empty message aborts
+# the commit.
+
+*** File '(Unnamed)'
+/home/hanghu/hnsw_experiments/.git/MERGE_MSG
+/pub/scratch/hanghu/hnsw_experiments/.git/MERGE_MSG
+
+*** File '* Startup Log *'
+Processing '/etc/joe/editorrc'...
+Processing '/etc/joe/ftyperc'...
+Finished processing /etc/joe/ftyperc
+Finished processing /etc/joe/editorrc

@@ -1,1 +1,1 @@
-rm *.log.INFO*
+rm *.log.*

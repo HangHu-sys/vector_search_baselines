@@ -88,8 +88,6 @@ nvidia-smi -l 1 > log_energy_gpu_ggnn_SPACEV10M_batch_10000
 
 ## Notes on GGNN
 
-@Hang e.g., what are the main files used for evaluataion? what are the main parameters, etc.
-
 Main ggnn files used for evaluation includes: `sift.cu`, `deep.cu` and `spacev.cu` (see `ggnn/src/`) depending on the targeted dataset. For index construction, GGNN latency and throughput evaluation, see `run_all_ggnn_construct_and_search.py`. For energy evaluation, see `run_all_ggnn_inf_search.py`.
 
 In GGNN construction mode, 2 main parameters are involved as follows. Output index file will be named as `{dataset}_KB{KBuild}_S{S}.bin`.

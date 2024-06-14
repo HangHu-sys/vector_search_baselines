@@ -54,27 +54,27 @@ Use two terminals, one for executing the program, the other for tracking energy.
 ```
 # SIFT10M
 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SIFT10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 1
-nvidia-smi -l 1 > log_energy_cpu_faiss_SIFT10M_batch_1
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_SIFT10M_batch_1
 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SIFT10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 16
-nvidia-smi -l 1 > log_energy_cpu_faiss_SIFT10M_batch_16
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_SIFT10M_batch_16
 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SIFT10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 10000
-nvidia-smi -l 1 > log_energy_cpu_faiss_SIFT10M_batch_10000
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_SIFT10M_batch_10000
 
 # Deep10M
 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname Deep10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 1
-nvidia-smi -l 1 > log_energy_cpu_faiss_Deep10M_batch_1
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_Deep10M_batch_1
 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname Deep10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 16
-nvidia-smi -l 1 > log_energy_cpu_faiss_Deep10M_batch_16
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_Deep10M_batch_16
 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname Deep10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 10000
-nvidia-smi -l 1 > log_energy_cpu_faiss_Deep10M_batch_10000
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_Deep10M_batch_10000
 
 # SPACEV10M
 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SPACEV10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 1
-nvidia-smi -l 1 > log_energy_cpu_faiss_SPACEV10M_batch_1
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_SPACEV10M_batch_1
 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SPACEV10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 16
-nvidia-smi -l 1 > log_energy_cpu_faiss_SPACEV10M_batch_16
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_SPACEV10M_batch_16
 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SPACEV10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 10000
-nvidia-smi -l 1 > log_energy_cpu_faiss_SPACEV10M_batch_10000
+/usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_SPACEV10M_batch_10000
 ```
 
 ## GPU Faiss
@@ -106,11 +106,13 @@ python construct_and_search_faiss.py --dbname Deep10M --index_key IVF4096,Flat -
 python construct_and_search_faiss.py --dbname SPACEV10M --index_key IVF4096,Flat --mode run_all --nthreads 16 --nruns 3 --nprobe_max 128 --use_gpu 1 --perf_df_path perf_df_faiss_gpu.pickle
 ```
 
-### Evaluate CPU energy 
+### Evaluate GPU energy 
 
 Use two terminals, one for executing the program, the other for tracking energy.
 
 ```
+export CUDA_VISIBLE_DEVICES=0
+
 # SIFT10M
 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SIFT10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 1 --parametersets 'nprobe=32' --qbs 1
 nvidia-smi -l 1 > log_energy_gpu_faiss_SIFT10M_batch_1

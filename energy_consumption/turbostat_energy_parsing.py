@@ -28,7 +28,9 @@ if os.path.isdir(fname):
 			lines = f.readlines()
 			for i, line in enumerate(lines):
 				if i >= 1:
-					energy = float(line.split()[-4])
+					core_power = float(line.split()[-4])
+					ram_power = float(line.split()[-3])
+					energy = core_power + ram_power
 					energy_array.append(energy)
 		print("File: {}\tAverage energy consumption: {:.2f} W".format(file, np.average(energy_array)))
 else: 

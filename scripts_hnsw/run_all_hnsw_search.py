@@ -94,8 +94,8 @@ if __name__ == "__main__":
     ef_list = [64]
     # ef_list = [16, 32, 48, 64, 80, 96]
     omp_list = [1] # 1 = enable; 0 = disable
-    # batch_size_list = [1, 2, 4, 8, 16, 32, 10000]
-    batch_size_list = [10000]
+    batch_size_list = [1, 2, 4, 8, 16, 32, 10000]
+    # batch_size_list = [10000]
 
     for max_degree in max_degree_list:
 

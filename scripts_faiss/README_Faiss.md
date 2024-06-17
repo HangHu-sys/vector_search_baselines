@@ -53,27 +53,27 @@ Use two terminals, one for executing the program, the other for tracking energy.
 
 ```
 # SIFT10M
-python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SIFT10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 1
+taskset --cpu-list 0-15 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SIFT10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 1
 /usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_SIFT10M_batch_1
-python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SIFT10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 16
+taskset --cpu-list 0-15 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SIFT10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 16
 /usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_SIFT10M_batch_16
-python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SIFT10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 10000
+taskset --cpu-list 0-15 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SIFT10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 10000
 /usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_SIFT10M_batch_10000
 
 # Deep10M
-python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname Deep10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 1
+taskset --cpu-list 0-15 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname Deep10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 1
 /usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_Deep10M_batch_1
-python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname Deep10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 16
+taskset --cpu-list 0-15 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname Deep10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 16
 /usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_Deep10M_batch_16
-python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname Deep10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 10000
+taskset --cpu-list 0-15 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname Deep10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 10000
 /usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_Deep10M_batch_10000
 
 # SPACEV10M
-python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SPACEV10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 1
+taskset --cpu-list 0-15 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SPACEV10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 1
 /usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_SPACEV10M_batch_1
-python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SPACEV10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 16
+taskset --cpu-list 0-15 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SPACEV10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 16
 /usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_SPACEV10M_batch_16
-python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SPACEV10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 10000
+taskset --cpu-list 0-15 python construct_and_search_faiss.py --faiss_index_path ../data/CPU_Faiss_indexes --dbname SPACEV10M --index_key IVF4096,Flat --mode energy --topK 100 --use_gpu 0 --parametersets 'nprobe=32' --qbs 10000
 /usr/lib/linux-tools-5.15.0-101/turbostat --S --interval 1  > log_energy_cpu_faiss_SPACEV10M_batch_10000
 ```
 

@@ -144,12 +144,12 @@ python run_all_hnsw_inf_search.py --hnsw_index_path ../data/CPU_hnsw_indexes --h
 ## Explore the relationship between a big graph versus several sub-graphs
 
 ```
-python construct_subgraph_hnsw.py --dbname SIFT1M --ef_construction 128 --MD 64 \
+python subgraph_vs_full_graph_hnsw.py --dbname SIFT1M --ef_construction 128 --MD 64 \
 	--hnsw_path ../data/CPU_hnsw_indexes --subgraph_result_path ../data/sub_graph_results
 
-python construct_subgraph_hnsw.py --dbname Deep1M --ef_construction 128 --MD 64 \
+python subgraph_vs_full_graph_hnsw.py --dbname Deep1M --ef_construction 128 --MD 64 \
 	--hnsw_path ../data/CPU_hnsw_indexes --subgraph_result_path ../data/sub_graph_results
 
-python construct_subgraph_hnsw.py --dbname SIFT10M --ef_construction 128 --MD 64 \
+python subgraph_vs_full_graph_hnsw.py --dbname SPACEV1M --ef_construction 128 --MD 64 \
 	--hnsw_path ../data/CPU_hnsw_indexes --subgraph_result_path ../data/sub_graph_results
 ```

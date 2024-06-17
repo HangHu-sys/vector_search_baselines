@@ -36,6 +36,50 @@ File: log_energy_cpu_nsg_SPACEV10M_batch_16     Average energy consumption: 104.
 File: log_idle  Average energy consumption: 63.16 W
 ```
 
+CPU (m5.metal 48 cores, 10000 batch size using 16/48 cores): 
+	the idle energy can be used as a deduction for estimating real 16-core energy setup
+```
+python turbostat_energy_parsing.py --fname log_CPU_m5.metal_use_48_cores/
+
+File: log_energy_cpu_faiss_Deep10M_batch_1      Average energy consumption: 140.49 W
+File: log_energy_cpu_faiss_Deep10M_batch_10000  Average energy consumption: 305.73 W
+File: log_energy_cpu_faiss_Deep10M_batch_10000_16_cores Average energy consumption: 209.85 W
+File: log_energy_cpu_faiss_Deep10M_batch_16     Average energy consumption: 217.16 W
+File: log_energy_cpu_faiss_SIFT10M_batch_1      Average energy consumption: 139.20 W
+File: log_energy_cpu_faiss_SIFT10M_batch_10000  Average energy consumption: 306.71 W
+File: log_energy_cpu_faiss_SIFT10M_batch_10000_16_cores Average energy consumption: 209.70 W
+File: log_energy_cpu_faiss_SIFT10M_batch_16     Average energy consumption: 209.53 W
+File: log_energy_cpu_faiss_SPACEV10M_batch_1    Average energy consumption: 140.03 W
+File: log_energy_cpu_faiss_SPACEV10M_batch_10000        Average energy consumption: 305.53 W
+File: log_energy_cpu_faiss_SPACEV10M_batch_10000_16_cores       Average energy consumption: 206.88 W
+File: log_energy_cpu_faiss_SPACEV10M_batch_16   Average energy consumption: 215.35 W
+File: log_energy_cpu_hnsw_Deep10M_batch_1       Average energy consumption: 137.97 W
+File: log_energy_cpu_hnsw_Deep10M_batch_10000   Average energy consumption: 322.40 W
+File: log_energy_cpu_hnsw_Deep10M_batch_10000_16_cores  Average energy consumption: 212.18 W
+File: log_energy_cpu_hnsw_Deep10M_batch_16      Average energy consumption: 202.43 W
+File: log_energy_cpu_hnsw_SIFT10M_batch_1       Average energy consumption: 136.93 W
+File: log_energy_cpu_hnsw_SIFT10M_batch_10000   Average energy consumption: 314.01 W
+File: log_energy_cpu_hnsw_SIFT10M_batch_10000_16_cores  Average energy consumption: 212.96 W
+File: log_energy_cpu_hnsw_SIFT10M_batch_16      Average energy consumption: 201.61 W
+File: log_energy_cpu_hnsw_SPACEV10M_batch_1     Average energy consumption: 138.55 W
+File: log_energy_cpu_hnsw_SPACEV10M_batch_10000 Average energy consumption: 344.51 W
+File: log_energy_cpu_hnsw_SPACEV10M_batch_10000_16_cores        Average energy consumption: 220.81 W
+File: log_energy_cpu_hnsw_SPACEV10M_batch_16    Average energy consumption: 209.26 W
+File: log_energy_cpu_nsg_Deep10M_batch_1        Average energy consumption: 136.71 W
+File: log_energy_cpu_nsg_Deep10M_batch_10000    Average energy consumption: 321.89 W
+File: log_energy_cpu_nsg_Deep10M_batch_10000_16_cores   Average energy consumption: 203.40 W
+File: log_energy_cpu_nsg_Deep10M_batch_16       Average energy consumption: 190.78 W
+File: log_energy_cpu_nsg_SIFT10M_batch_1        Average energy consumption: 136.51 W
+File: log_energy_cpu_nsg_SIFT10M_batch_10000    Average energy consumption: 308.46 W
+File: log_energy_cpu_nsg_SIFT10M_batch_10000_16_cores   Average energy consumption: 206.51 W
+File: log_energy_cpu_nsg_SIFT10M_batch_16       Average energy consumption: 192.94 W
+File: log_energy_cpu_nsg_SPACEV10M_batch_1      Average energy consumption: 136.49 W
+File: log_energy_cpu_nsg_SPACEV10M_batch_10000  Average energy consumption: 319.15 W
+File: log_energy_cpu_nsg_SPACEV10M_batch_10000_16_cores Average energy consumption: 204.92 W
+File: log_energy_cpu_nsg_SPACEV10M_batch_16     Average energy consumption: 192.46 W
+File: log_idle  Average energy consumption: 90.60 W
+```
+
 GPU (3090): 
 
 ```

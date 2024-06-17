@@ -1,6 +1,6 @@
-# HNSW and NSG baselines
+# CPU and GPU vector search baselines
 
-This repo contains all the baseline experiments for HNSW and NSG, as well as the index conversion scripts for FPGAs.
+This repo contains all the vector search baseline experiments for HNSW, NSG, Faiss, GGNN, as well as the index conversion scripts for FPGAs.
 
 
 **Clone the repository**
